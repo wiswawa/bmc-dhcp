@@ -39,7 +39,7 @@ def main() -> int:
             raise RuntimeError(f"Missing Windows package component: {name}")
     resources = package / "Resources"
     resources.mkdir()
-    collect_licenses(resources, build / "pyinstaller/runtime/Analysis-01.toc", version)
+    collect_licenses(resources, build / "native-binaries.toc", version)
     for name in ("WIN-README.md", "LICENSE", "THIRD_PARTY_NOTICES.md"):
         shutil.copy2(ROOT / name, package / name)
     archive = ROOT / "dist" / f"BMC-DHCP-{version}-Windows-x64.zip"

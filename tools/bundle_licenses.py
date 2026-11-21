@@ -29,7 +29,7 @@ def native_binaries(toc: Path) -> list[tuple[str, Path]]:
                 visit(child)
 
     visit(ast.literal_eval(toc.read_text()))
-    return result
+    return sorted(set(result))
 
 
 def collect_licenses(resources: Path, toc: Path, version: str) -> None:
