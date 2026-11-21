@@ -17,6 +17,7 @@ import sysconfig
 
 from bundle_licenses import collect_licenses
 from check_release import check
+from release_checksum import write_sha256
 
 ROOT = Path(__file__).resolve().parents[1]
 BUILD = ROOT / "build" / "macos"
@@ -149,8 +150,7 @@ def main() -> int:
     dist.mkdir(exist_ok=True)
     archive = dist / f"BMC-DHCP-{version}-macOS-{arch}.zip"
     run("/usr/bin/ditto", "-c", "-k", "--sequesterRsrc", "--keepParent", app, archive)
-    checksum = archive.with_suffix(archive.suffix + ".sha256")
-    checksum.write_text(hashlib.sha256(archive.read_bytes()).hexdigest() + "  " + archive.name + "\n")
+    checksum = write_sha256(archive)
     print(f"App: {app}\nZIP: {archive}\nSHA256: {checksum}")
     return 0
 

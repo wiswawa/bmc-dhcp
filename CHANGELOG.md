@@ -13,6 +13,7 @@ Version numbers follow semantic versioning. Unreleased and unverified work is la
 - Make CLI, wheel metadata and desktop versions use the same version source.
 - Restrict console binding to loopback and compare omitted HTTP Origin ports using the actual default port.
 - Keep API clients from overriding the launcher's lease storage path.
+- Emit portable LF-only SHA-256 sidecars so release archives validate with coreutils on every platform.
 
 ### Added
 
@@ -24,7 +25,7 @@ Version numbers follow semantic versioning. Unreleased and unverified work is la
 
 ### Verification boundary
 
-Local automated checks are recorded in [VALIDATION.md](docs/VALIDATION.md). GitHub-hosted workflows, Intel builds and physical BMC operation remain unverified until actually run. No GitHub repository or public release is created by preparing these files.
+Automated checks are recorded in [VALIDATION.md](docs/VALIDATION.md). GitHub-hosted normal CI, Apple Silicon, Intel and Windows x64 release candidates have completed successfully. Physical BMC DHCP, Npcap, firewall, UAC and privileged NIC recovery remain hardware-specific verification targets.
 
 ## 1.8.0 — 2026-11-13
 

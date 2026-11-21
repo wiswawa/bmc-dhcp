@@ -13,6 +13,7 @@ TOOLS = Path(__file__).resolve().parents[1] / "tools"
 sys.path.insert(0, str(TOOLS))
 
 from check_release import privacy_findings, workflow_env_findings  # noqa: E402
+from release_checksum import write_sha256  # noqa: E402
 from source_bundle import build_source  # noqa: E402
 from source_manifest import public_files  # noqa: E402
 from bmcdhcp import __version__, cli  # noqa: E402
@@ -60,6 +61,14 @@ class PublicSourceTest(unittest.TestCase):
                 self.assertFalse(any("private" in name or "credentials" in name for name in names))
                 self.assertFalse(any(".egg-info" in name for name in names))
                 self.assertTrue(all(member.uid == 0 and member.mtime == 0 for member in archive.getmembers()))
+
+    def test_checksum_sidecar_uses_lf_on_every_platform(self):
+        with tempfile.TemporaryDirectory() as temp:
+            archive = Path(temp) / "archive.zip"
+            archive.write_bytes(b"release data")
+            checksum = write_sha256(archive)
+            expected = hashlib.sha256(archive.read_bytes()).hexdigest()
+            self.assertEqual(checksum.read_bytes(), f"{expected}  archive.zip\n".encode("ascii"))
 
     def test_source_export_rejects_an_external_symlink(self):
         with tempfile.TemporaryDirectory() as temp:

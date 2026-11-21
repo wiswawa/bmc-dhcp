@@ -3,8 +3,6 @@
 
 from __future__ import annotations
 
-import hashlib
-from pathlib import Path
 import platform
 import runpy
 import shutil
@@ -14,6 +12,7 @@ import zipfile
 
 from bundle_licenses import collect_licenses
 from check_release import check
+from release_checksum import write_sha256
 from source_manifest import ROOT
 
 
@@ -48,7 +47,7 @@ def main() -> int:
         for path in sorted(package.rglob("*")):
             if path.is_file():
                 output.write(path, "BMC DHCP/" + path.relative_to(package).as_posix())
-    Path(str(archive) + ".sha256").write_text(hashlib.sha256(archive.read_bytes()).hexdigest() + "  " + archive.name + "\n")
+    write_sha256(archive)
     print(f"Windows x64 application: {archive.name}")
     return 0
 

@@ -35,11 +35,11 @@ Binary packages include Python and Scapy. Npcap is a separate optional Windows d
 - Save the original NIC configuration before a change, restore it on stop, and retain recovery records if cleanup fails.
 - Provide a loopback-only control API, live logs, diagnostics and a source CLI.
 
-This is a **beta**. Automated protocol, loopback, packaging and native-window checks have been run locally. Physical BMC DHCP and privileged NIC recovery have not yet been validated on hardware. See [the exact verification boundary](docs/VALIDATION.md).
+This is a **beta**. Automated protocol, loopback, packaging and native-window checks pass locally and in hosted macOS 15/Windows x64 builds. Physical BMC DHCP and privileged NIC recovery have not yet been validated on real hardware. See [the exact verification boundary](docs/VALIDATION.md).
 
 ## Use the Mac app
 
-The current binary release requires macOS 15+ (the bundled Python runtime sets the minimum). Use the ZIP matching your Mac architecture when a release is available. Current local validation covers Apple Silicon; Intel release builds are configured but not yet run.
+The current binary release requires macOS 15+ (the bundled Python runtime sets the minimum). Use the ZIP matching your Mac architecture. Both Apple Silicon and Intel packages have passed hosted build and package verification; physical operation still requires testing on the target hardware.
 
 1. Connect your Ethernet adapter to the dedicated BMC port or an isolated management switch. The BMC must have DHCP enabled.
 2. Open **BMC DHCP.app** and complete macOS administrator authorization.
@@ -71,7 +71,7 @@ See [CLI and discovery reference](docs/CLI_REFERENCE.zh-CN.md) for pools, static
 - [Release builds, source archives and signing](docs/RELEASING.md)
 - [Changes](CHANGELOG.md) · [Security policy](SECURITY.md) · [Community conduct](CODE_OF_CONDUCT.md)
 
-CI configurations cover lint, UI smoke checks, wheel installation, macOS tests and manually requested desktop build candidates. They do not constitute a successful GitHub-hosted run until executed in the repository. Release workflows upload reviewable Actions artifacts and do not automatically publish a GitHub Release.
+Hosted CI covers lint, UI smoke checks, wheel installation and macOS tests on Python 3.11, 3.13 and 3.15. The manual release workflow builds and verifies Apple Silicon, Intel and Windows x64 candidates before maintainers review the artifacts. Release workflows do not publish a GitHub Release automatically.
 
 ## License
 

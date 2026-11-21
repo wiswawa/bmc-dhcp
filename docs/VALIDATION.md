@@ -6,8 +6,9 @@
 
 | 检查 | 结果 | 方式 |
 | --- | --- | --- |
-| Python 3.13.3 回归 | 420 项通过 | unittest，物理网口操作由 mock 隔离 |
-| Python 3.15.0 回归 | 同一套 420 项通过 | 验证当前两种解释器下的行为 |
+| Python 3.13.3 本地回归 | 430 项通过，1 项跳过 | 跳过项只接受真实 Windows Winsock；其余物理网口操作由 mock 隔离 |
+| Python 3.11 / 3.13 / 3.15 在线回归 | 全部通过 | GitHub Actions `macos-tests` 矩阵，运行 [44864338173](https://github.com/zyf18195378233/bmc-dhcp/actions/runs/44864338173) |
+| 在线质量检查 | 通过 | pyflakes、公开内容审计、UI 冒烟、shell 语法、wheel 构建与源码目录外安装 |
 | 前端函数冒烟 | 35/35 通过 | 超时、重试、空网口与错误呈现 |
 | 静态与语法检查 | pyflakes、Bash、YAML 通过 | GitHub 工作流及问题表单可解析，动作引用为完整 SHA |
 | DHCP 自检 | 11 项通过 | 真实环回 UDP DORA、Session 启停、网口枚举；使用临时端口 |
@@ -21,7 +22,9 @@
 | 缓存防漂移 | 通过 | 篡改冻结后端指纹时，`--skip-freeze` 拒绝继续构建 |
 | 原生窗口 | 通过 | 默认设置、诊断、静态 IP 页面与退出确认；新截图来自本次实际应用 |
 | 原生退出清理 | 通过 | 测试窗口和后台进程退出，会话文件删除 |
-| Windows 源码 ZIP | 打包检查通过 | 使用同一公开清单，包含许可证与文档；不是 Windows 运行结果 |
+| Windows x64 便携包 | 通过 | Windows 2025 runner 上实际运行 GUI 包校验、CLI 自检、迁移路径、环回 API 与退出 |
+| 三平台候选包 | 全部通过 | [运行 44865226457](https://github.com/zyf18195378233/bmc-dhcp/actions/runs/44865226457) 中 arm64、Intel、Windows x64 三个作业均为 success |
+| 发布包内容审计 | 通过 | 解压并检查文件名、签名、许可证、对应源码、系统 DLL 排除、无内部记录/日志/令牌/个人路径；SHA-256 sidecar 可跨平台校验 |
 
 Native QA 使用 `--no-elevate`、独立后台数据目录和临时 WebKit 存储，不读取/覆盖用户真实保存的表单。截图显示普通权限、空租约，不代表真实 BMC 分配成功。
 
@@ -45,8 +48,8 @@ Mac 包使用独立、固定依赖的构建环境。Scapy 2.8.0 源码包已按 
 ## 明确未验证的部分
 
 - **真实 BMC、物理二层链路与管理员网口改配/恢复尚未实机验证。** 环回与 mock 不能替代这些结果。
-- **GitHub 远端尚未创建，在线 CI 尚未运行。** Python 3.11、Intel 以及其他 macOS 版本仅配置了后续 CI/候选构建；不能声称已经通过。
 - **没有 Developer ID 签名或公证。** 跨机器首次启动可能需要用户允许打开。
-- **Windows 没有真机验证。** 单元中的 Windows 模拟和源码 ZIP 检查不代表原生 Windows 运行成功。
+- **Windows 包已在 Windows 2025 GitHub runner 上实际启动和验证，但仍未接物理 BMC。** Npcap、防火墙、UAC 交互以及不同 OEM 网卡/驱动仍需目标机验证。
+- **Intel 和 Apple Silicon 包均已在 GitHub runner 上完成构建和包内验证，但 runner 验证不等同于目标 Mac 的物理网口改配与恢复。**
 
 因此本版本仍标为 **Beta**。完整发布步骤见 [发布指南](RELEASING.md)，接线操作见 [快速上手](QUICKSTART.md)。

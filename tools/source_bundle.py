@@ -5,12 +5,12 @@ from __future__ import annotations
 
 import argparse
 import gzip
-import hashlib
 import io
 from pathlib import Path
 import runpy
 import tarfile
 
+from release_checksum import write_sha256
 from source_manifest import ROOT, public_files
 
 
@@ -28,8 +28,7 @@ def build_source(destination: Path, root: Path = ROOT) -> Path:
                 info.mode = 0o755 if relative in ("bmcd", "install.sh", "tools/make_app.sh") else 0o644
                 info.mtime = 0
                 archive.addfile(info, io.BytesIO(data))
-    checksum = destination.with_suffix(destination.suffix + ".sha256")
-    checksum.write_text(hashlib.sha256(destination.read_bytes()).hexdigest() + "  " + destination.name + "\n")
+    write_sha256(destination)
     return destination
 
 

@@ -29,11 +29,11 @@
 - 改网口前先持久化原配置；备份失败就不修改。停止时恢复；恢复失败保留记录并允许重试。
 - 本地控制台仅监听环回地址，校验访问令牌、Host 和 Origin。
 
-当前为 **Beta**：已完成本地协议、环回 UDP、打包和原生窗口验证；尚未接真实 BMC 验证 DHCP、管理员网口改配及恢复。详见 [验证边界](docs/VALIDATION.md)。
+当前为 **Beta**：本地协议、环回 UDP、打包和原生窗口验证通过，GitHub 托管的 macOS 15/Windows x64 构建与包内验证也已通过；尚未接真实 BMC 验证 DHCP、管理员网口改配及恢复。详见 [验证边界](docs/VALIDATION.md)。
 
 ## 使用
 
-当前二进制版本需要 macOS 15+（由随包 Python 的构建目标决定），下载与 Mac 架构匹配的 ZIP 后解压。目前本地验证覆盖 Apple Silicon；Intel 构建流程已配置，尚未在线运行。
+当前二进制版本需要 macOS 15+（由随包 Python 的构建目标决定），下载与 Mac 架构匹配的 ZIP 后解压。Apple Silicon 与 Intel 包均已通过 GitHub 托管构建和包内验证；实际运行仍以目标机器测试为准。
 
 1. 用网线连接 Mac 网卡与 BMC 专用管理口，或接入隔离管理交换机。确认 BMC 已启用 DHCP。
 2. 打开 **BMC DHCP.app**，通过 macOS 管理员授权。
@@ -65,7 +65,7 @@ python3 -m venv .venv
 - [发布指南](docs/RELEASING.md)：构建、许可证、对应源码、签名与校验。
 - [更新记录](CHANGELOG.md) · [安全政策](SECURITY.md) · [社区规范](CODE_OF_CONDUCT.md)。
 
-已配置 GitHub CI 和手动构建候选包的工作流；只有推到仓库并实际执行后，才能认为 GitHub 在线检查通过。工作流只上传可审阅的 Actions 构建产物，不会自动公开发布 Release。
+GitHub CI 覆盖静态检查、前端冒烟、wheel 安装及 Python 3.11、3.13、3.15 的 macOS 测试。手动发布工作流会先构建并验证 Apple Silicon、Intel 与 Windows x64 候选包，再由维护者审阅产物；工作流不会自动公开发布 Release。
 
 ## 许可证
 
