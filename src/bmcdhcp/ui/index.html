@@ -1,0 +1,1740 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BMC DHCP</title>
+<style>
+  :root{
+    color-scheme: dark;
+    --bg:#0b0e11; --panel:#12161b; --panel2:#171c22; --line:#232b34;
+    --text:#e6edf3; --muted:#8b949e; --faint:#5b6673;
+    --accent:#3ea6ff; --ok:#3fb950; --warn:#d29922; --err:#f85149; --purple:#bc8cff;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0; background:var(--bg); color:var(--text);
+    font:13px/1.55 -apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue","PingFang SC",sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .mono{font-family:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace}
+  .app{display:flex;flex-direction:column;height:100vh;min-height:640px}
+
+  /* ---------- header ---------- */
+  header{
+    display:flex;align-items:center;gap:14px;padding:12px 18px;
+    border-bottom:1px solid var(--line);background:linear-gradient(180deg,#12161b,#0e1216);
+    -webkit-user-select:none;user-select:none;flex:0 0 auto;
+  }
+  .logo{width:22px;height:22px;border-radius:6px;background:
+    radial-gradient(circle at 30% 30%,#5eb8ff,#0a84ff 60%,#0059c9);box-shadow:0 0 0 1px #ffffff14}
+  .title{font-weight:600;letter-spacing:.3px}
+  .title small{color:var(--muted);font-weight:400;margin-left:8px;letter-spacing:0}
+  .pill{
+    display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;
+    font-size:12px;border:1px solid var(--line);background:#0f1317;color:var(--muted);
+  }
+  .pill .dot{width:7px;height:7px;border-radius:50%;background:var(--faint)}
+  .pill.running{color:var(--ok);border-color:#1d3a25;background:#0e1a12}
+  .pill.running .dot{background:var(--ok);box-shadow:0 0 8px #3fb95088;animation:breathe 2s infinite}
+  .pill.starting,.pill.stopping{color:var(--warn);border-color:#3a3115;background:#1a1609}
+  .pill.starting .dot,.pill.stopping .dot{background:var(--warn);animation:breathe 1s infinite}
+  .pill.error{color:var(--err);border-color:#3d1d1d;background:#1a0f0f}
+  .pill.error .dot{background:var(--err)}
+  .pill.warn{color:var(--warn);border-color:#3a3115;background:#1a1609}
+  .pill.warn .dot{background:var(--warn)}
+  @keyframes breathe{0%,100%{opacity:1}50%{opacity:.35}}
+  .spacer{flex:1}
+  .meta{color:var(--faint);font-size:12px;overflow:hidden;text-overflow:ellipsis;
+        white-space:nowrap;min-width:0;flex:0 1 auto}
+  .meta b{color:var(--muted);font-weight:500}
+
+  /* ---------- layout ---------- */
+  main{
+    flex:1;min-height:0;display:grid;gap:14px;padding:14px 18px 16px;
+    grid-template-columns:352px minmax(0,1fr);
+    grid-template-rows:minmax(0,1.15fr) minmax(0,.85fr);
+    grid-template-areas:"controls leases" "controls logs";
+  }
+  .panel{
+    background:var(--panel);border:1px solid var(--line);border-radius:12px;
+    display:flex;flex-direction:column;min-height:0;overflow:hidden;
+  }
+  .panel > .head{
+    display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--line);
+    font-size:12px;color:var(--muted);letter-spacing:.3px;flex:0 0 auto;
+  }
+  .panel > .head .spacer{flex:1}
+  .panel > .body{overflow:auto;min-height:0;flex:1}
+  .panel.controls{grid-area:controls}
+  .panel.leases{grid-area:leases}
+  .panel.logs{grid-area:logs}
+  .panel.controls > .body{padding:14px}
+
+  /* ---------- tabs（右上角：租约 / IP 探测） ---------- */
+  .tabs{display:flex;gap:3px;margin:-3px 0 -3px -8px}
+  .tab{
+    appearance:none;border:1px solid transparent;background:transparent;color:var(--muted);
+    font:inherit;font-size:12px;padding:4px 11px;border-radius:7px;cursor:pointer;
+    display:inline-flex;align-items:center;gap:6px;transition:.12s;
+  }
+  .tab:hover{color:var(--text);background:#1b2229}
+  .tab.active{color:var(--text);background:#1b2229;border-color:var(--line)}
+  .tab .cnt{
+    padding:0 6px;border-radius:999px;background:#0f2417;color:#57d97e;
+    border:1px solid #1d3a25;font-size:10.5px;line-height:15px;
+  }
+
+  /* ---------- IP 探测 ---------- */
+  .scan-ctl{
+    position:sticky;top:0;z-index:2;padding:12px 14px 11px;
+    border-bottom:1px solid var(--line);background:var(--panel2);
+  }
+  .scan-ctl .field{margin-bottom:0}
+  .scan-ctl .field label{font-size:11.5px}
+  .inline{display:flex;gap:8px;align-items:center}
+  .inline .btn{flex:0 0 auto}
+  .checks{display:flex;gap:16px;flex-wrap:wrap;margin-top:9px}
+  .checks .check{margin:0;font-size:12px}
+  .checks .check input{width:13px;height:13px}
+  .scan-progress{
+    margin-top:9px;font-size:12px;color:var(--muted);display:flex;align-items:center;gap:10px;
+  }
+  .scan-progress .msg{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .bar{height:4px;border-radius:3px;background:#1b2229;overflow:hidden;flex:0 0 108px}
+  .bar i{display:block;height:100%;width:0;border-radius:3px;
+         background:linear-gradient(90deg,#0a84ff,#3fb950);transition:width .35s ease}
+  .scan-note{
+    margin:10px 14px 0;padding:8px 11px;border-radius:8px;font-size:12px;line-height:1.5;
+    background:#1a1609;border:1px solid #3a3115;color:#e3b341;
+    display:flex;gap:10px;align-items:center;
+  }
+  .scan-note .btn{flex:0 0 auto;margin-left:auto}
+  .scan-err{
+    margin:10px 14px 0;padding:8px 11px;border-radius:8px;font-size:11.5px;line-height:1.6;
+    background:#1a0f0f;border:1px solid #3d1d1d;color:#ff9d97;
+  }
+  .manualrow{display:flex;gap:8px;align-items:center;margin-top:6px}
+  .manualrow input{flex:1;min-width:0}
+  .manualrow .meta{font-size:11px;color:var(--faint)}
+  .presets{display:flex;gap:7px;flex-wrap:wrap;margin-top:7px}
+  .chip{
+    appearance:none;border:1px solid var(--line);background:#161c22;color:var(--muted);
+    font:11.5px/1 -apple-system,sans-serif;padding:5px 10px;border-radius:999px;cursor:pointer;
+  }
+  .chip:hover{border-color:#2f3d4a;color:var(--text);background:#1b2229}
+  .v6panel{margin:10px 14px 0;display:block;background:#0f1620;border-color:#1e2a3a;color:#9ecbff}
+  .v6panel .v6head{font-size:12px;margin-bottom:6px;color:#9ecbff}
+  .v6row{display:flex;gap:10px;align-items:center;font-size:12px;padding:3px 0}
+  .v6row .a{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+  .v6row .m{color:var(--faint);font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+  .v6row a{margin-left:auto}
+  .empty ul code{background:#161c22;border:1px solid var(--line);border-radius:4px;padding:1px 5px}
+  .src{
+    display:inline-block;font-size:10.5px;line-height:15px;color:var(--muted);
+    border:1px solid var(--line);border-radius:5px;padding:0 5px;margin-right:4px;
+  }
+  .scan-results thead th{position:static}
+
+  /* 滚动条 */
+  ::-webkit-scrollbar{width:10px;height:10px}
+  ::-webkit-scrollbar-thumb{background:#242c35;border-radius:6px;border:2px solid var(--panel)}
+  ::-webkit-scrollbar-thumb:hover{background:#2f3a45}
+  ::-webkit-scrollbar-track{background:transparent}
+
+  /* ---------- form ---------- */
+  .field{margin-bottom:12px}
+  .field label{display:block;font-size:12px;color:var(--muted);margin-bottom:5px}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  input[type=text],input[type=number],select{
+    width:100%;background:#0d1116;color:var(--text);border:1px solid var(--line);
+    border-radius:8px;padding:7px 9px;font-size:13px;outline:none;
+    font-family:ui-monospace,SFMono-Regular,"SF Mono",Menlo,monospace;
+  }
+  select{font-family:inherit}
+  input:focus,select:focus{border-color:#2f6ea8;box-shadow:0 0 0 3px #3ea6ff1a}
+  input:disabled,select:disabled{opacity:.55;cursor:not-allowed}
+  .hint{color:var(--faint);font-size:11px;margin-top:5px;line-height:1.45}
+  .check{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--muted);margin:9px 0}
+  .check input{accent-color:#3ea6ff;width:14px;height:14px}
+  details{border-top:1px solid var(--line);margin-top:14px;padding-top:10px}
+  summary{cursor:pointer;color:var(--muted);font-size:12px;outline:none;-webkit-user-select:none;user-select:none}
+  summary:hover{color:var(--text)}
+  details[open] summary{margin-bottom:12px}
+
+  .btn{
+    appearance:none;border:1px solid var(--line);background:#1b2229;color:var(--text);
+    border-radius:8px;padding:7px 14px;font-size:13px;cursor:pointer;transition:.12s;
+    font-family:inherit;
+  }
+  .btn:hover:not(:disabled){background:#222b33;border-color:#2f3a45}
+  .btn:active:not(:disabled){transform:translateY(1px)}
+  .btn:disabled{opacity:.5;cursor:not-allowed}
+  .btn.primary{background:#0a84ff;border-color:#0a84ff;color:#fff;font-weight:600}
+  .btn.primary:hover:not(:disabled){background:#2b95ff;border-color:#2b95ff}
+  .btn.danger{background:#2a1214;border-color:#5a2226;color:#ff9d97}
+  .btn.danger:hover:not(:disabled){background:#39171a}
+  .btn.small{padding:4px 9px;font-size:12px;border-radius:6px}
+  .btn.ghost{background:transparent}
+  .actions{display:flex;gap:9px;margin-top:16px}
+  .actions .btn.primary,.actions .btn.danger{flex:1;padding:10px 14px;font-size:14px}
+
+  /* ---------- status cards ---------- */
+  .cards{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:16px}
+  .card{background:#0d1116;border:1px solid var(--line);border-radius:9px;padding:9px 11px}
+  .card .k{font-size:11px;color:var(--faint);letter-spacing:.3px}
+  .card .v{font-size:15px;margin-top:2px;font-weight:600}
+  .card .v.mono{font-size:13px}
+
+  .banner{
+    display:none;padding:10px 12px;border-radius:9px;
+    font-size:12.5px;line-height:1.5;margin-bottom:12px;border:1px solid;
+  }
+  .banner.show{display:block}   /* 用 flex 会把 <b> 和后面的文字拆成两段，排版会错位 */
+  .banner.warn{background:#1a1609;border-color:#3a3115;color:#e3b341}
+  .banner.err{background:#1a0f0f;border-color:#3d1d1d;color:#ff9d97}
+  .banner.info{background:#0d1a24;border-color:#17384d;color:#79c0ff}
+  .banner b{font-weight:600}
+  .banner .btn{align-self:center;margin-left:auto;flex:0 0 auto}
+
+  /* ---------- lease table ---------- */
+  table{width:100%;border-collapse:collapse;font-size:12.5px}
+  thead th{
+    position:sticky;top:0;background:var(--panel2);color:var(--muted);font-weight:500;
+    text-align:left;padding:8px 12px;border-bottom:1px solid var(--line);font-size:11.5px;
+    letter-spacing:.4px;white-space:nowrap;z-index:1;
+  }
+  tbody td{padding:7px 12px;border-bottom:1px solid #1a2027;white-space:nowrap;vertical-align:middle}
+  tbody tr:hover td{background:#151b21}
+  .ip{font-weight:600;color:#cfe3ff}
+  .badge{display:inline-block;padding:1px 8px;border-radius:999px;font-size:11px;border:1px solid transparent}
+  .badge.bound{background:#0f2417;color:#57d97e;border-color:#1d3a25}
+  .badge.offer{background:#241f0d;color:#d9b64a;border-color:#3a3115}
+  .badge.idle{background:#1a1f26;color:var(--faint);border-color:#232b34}
+  .vendor{color:#c9b6f7}
+  .conf{color:var(--faint);font-size:11px;margin-left:3px}
+  .empty{padding:36px 16px;text-align:center;color:var(--faint)}
+  .empty b{color:var(--muted);font-weight:500}
+  .empty ul{margin:14px auto 0;padding:0;list-style:none;text-align:left;max-width:430px;font-size:12px;line-height:1.9;color:var(--faint)}
+  .empty ul li::before{content:"·";margin-right:7px;color:#3d4a57}
+  .op{color:var(--accent);cursor:pointer;text-decoration:none;margin-right:10px;font-size:12px}
+  .op:hover{text-decoration:underline}
+
+  /* ---------- logs ---------- */
+  .log{
+    font-family:ui-monospace,SFMono-Regular,"SF Mono",Menlo,monospace;font-size:12px;
+    padding:8px 14px 14px;line-height:1.65;
+  }
+  .log .line{display:flex;gap:9px;white-space:pre-wrap;word-break:break-word}
+  .log .t{color:#3d4a57;flex:0 0 auto}
+  .log .m{flex:1;min-width:0}
+  .log .info .m{color:#a8b3bf}
+  .log .ok .m{color:#57d97e}
+  .log .warn .m{color:#e3b341}
+  .log .err .m{color:#ff7b72}
+  .log .sys .m{color:var(--faint);font-style:italic}
+
+  /* ---------- modal ---------- */
+  .overlay{
+    position:fixed;inset:0;background:#000a;backdrop-filter:blur(3px);
+    display:none;align-items:center;justify-content:center;z-index:50;padding:24px;
+  }
+  .overlay.show{display:flex}
+  .modal{
+    background:var(--panel);border:1px solid var(--line);border-radius:14px;
+    width:min(560px,100%);max-height:80vh;overflow:auto;box-shadow:0 24px 60px #000a;
+  }
+  .modal .mhead{display:flex;align-items:center;padding:14px 18px;border-bottom:1px solid var(--line)}
+  .modal .mhead .title{font-size:14px}
+  .modal .mbody{padding:16px 18px}
+  .modal .mrow{display:flex;gap:10px;padding:5px 0;font-size:12.5px}
+  .modal .mrow .k{color:var(--faint);width:74px;flex:0 0 auto}
+  .modal .mrow .v{color:var(--text);word-break:break-all}
+  .modal .mfoot{padding:12px 18px;border-top:1px solid var(--line);display:flex;gap:9px;justify-content:flex-end}
+
+  /* ---------- toast ---------- */
+  .toasts{position:fixed;right:18px;bottom:18px;display:flex;flex-direction:column;gap:8px;z-index:60}
+  .toast{
+    background:#1b2229;border:1px solid var(--line);border-left:3px solid var(--accent);
+    padding:9px 14px;border-radius:8px;font-size:12.5px;max-width:420px;
+    box-shadow:0 10px 30px #0008;animation:slidein .16s ease-out;
+  }
+  .toast.err{border-left-color:var(--err)}
+  .toast.ok{border-left-color:var(--ok)}
+  @keyframes slidein{from{opacity:0;transform:translateX(12px)}to{opacity:1;transform:none}}
+
+  @media (max-width:1000px){
+    main{grid-template-columns:1fr;grid-template-rows:auto minmax(240px,1fr) minmax(180px,.8fr);
+         grid-template-areas:"controls" "leases" "logs"}
+    .app{height:auto;min-height:100vh}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="logo"></div>
+    <div class="title">BMC DHCP<small>给新机器的 BMC 发临时地址</small></div>
+    <div class="pill" id="statePill"><span class="dot"></span><span id="stateText">未运行</span></div>
+    <div class="spacer"></div>
+    <div class="meta" id="headMeta"></div>
+    <button class="btn small ghost" id="quitBtn" title="停止服务并关掉后台">退出</button>
+  </header>
+
+  <main>
+    <!-- 左：控制 -->
+    <section class="panel controls">
+      <div class="head">连接设置<span class="spacer"></span><span id="ifaceCount" class="meta"></span></div>
+      <div class="body">
+        <div class="banner" id="banner"></div>
+
+        <div class="field">
+          <label for="iface">网卡（插着 BMC 网线的那个口）</label>
+          <div style="display:flex;gap:8px">
+            <select id="iface"></select>
+            <button class="btn small" id="refreshIfaces" title="重新扫描网卡" style="flex:0 0 auto">刷新</button>
+          </div>
+          <div class="hint" id="ifaceHint"></div>
+          <div class="manualrow" id="ifaceManualRow" style="display:none">
+            <input type="text" id="ifaceManual" spellcheck="false"
+                   placeholder="手动填网卡名，例如 以太网 2 / en7">
+            <span class="meta" id="ifaceManualHint">列表里没有？直接填名字，启动时按名字找。</span>
+          </div>
+          <label class="check" style="margin-top:6px">
+            <input type="checkbox" id="showAllIfaces"> 显示所有网卡（含虚拟网卡 / Wi-Fi / 无链路）
+          </label>
+        </div>
+
+        <div class="field">
+          <label for="subnet">子网</label>
+          <input type="text" id="subnet" value="10.99.0.0/24" spellcheck="false">
+          <div class="hint">本机会自动占用这个网段的 .1（可在高级里改）</div>
+        </div>
+
+        <div class="row2">
+          <div class="field">
+            <label for="pool">地址池</label>
+            <input type="text" id="pool" value=".100-.200" spellcheck="false">
+          </div>
+          <div class="field">
+            <label for="lease">租期（秒）</label>
+            <input type="number" id="lease" value="300" min="30" max="86400" step="30">
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="engine">发包引擎</label>
+          <select id="engine">
+            <option value="auto">auto（推荐）</option>
+            <option value="raw">raw（scapy/BPF，最可靠）</option>
+            <option value="udp">udp（纯标准库广播）</option>
+            <option value="dnsmasq">dnsmasq（外挂）</option>
+          </select>
+        </div>
+
+        <details id="advanced">
+          <summary>高级选项</summary>
+          <div class="row2">
+            <div class="field">
+              <label for="serverIp">本机地址</label>
+              <input type="text" id="serverIp" placeholder="自动：子网 .1" spellcheck="false">
+            </div>
+            <div class="field">
+              <label for="domain">域名 (opt 15)</label>
+              <input type="text" id="domain" value="bmc.local" spellcheck="false">
+            </div>
+          </div>
+          <div class="field">
+            <label for="dns">DNS（逗号分隔，留空则不下发）</label>
+            <input type="text" id="dns" placeholder="留空" spellcheck="false">
+          </div>
+          <div class="field">
+            <label for="routers">网关（留空=用本机地址）</label>
+            <input type="text" id="routers" placeholder="留空" spellcheck="false">
+          </div>
+          <div class="field">
+            <label for="hostnamePrefix">主机名前缀</label>
+            <input type="text" id="hostnamePrefix" value="bmc" spellcheck="false">
+          </div>
+          <label class="check"><input type="checkbox" id="configure" checked> 自动把网卡设成静态地址</label>
+          <label class="check"><input type="checkbox" id="restore" checked> 停止时还原网卡原配置</label>
+          <label class="check"><input type="checkbox" id="autoStop" checked> 界面关掉 2 分钟后自动停止并还原</label>
+          <div class="field" style="margin-top:12px">
+            <label for="probeRetry">分配后多久再探测管理端口（秒）</label>
+            <input type="number" id="probeRetry" value="7" min="0" max="60" step="1">
+          </div>
+          <div class="actions" style="margin-top:6px">
+            <button class="btn small" id="diagBtn">运行诊断</button>
+            <button class="btn small ghost" id="resetBtn">恢复默认</button>
+          </div>
+        </details>
+
+        <div class="actions">
+          <button class="btn primary" id="startBtn">启动服务</button>
+          <button class="btn danger" id="stopBtn" style="display:none">停止</button>
+        </div>
+
+        <div class="cards">
+          <div class="card"><div class="k">已分配</div><div class="v" id="statBound">0</div></div>
+          <div class="card"><div class="k">地址池</div><div class="v" id="statPool">0</div></div>
+          <div class="card"><div class="k">运行时长</div><div class="v mono" id="statUptime">—</div></div>
+          <div class="card"><div class="k">引擎</div><div class="v mono" id="statEngine">—</div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 右上：租约 / IP 探测 -->
+    <section class="panel leases">
+      <div class="head">
+        <div class="tabs">
+          <button class="tab active" id="tabLeases" type="button">租约</button>
+          <button class="tab" id="tabScan" type="button">IP 探测<span class="cnt" id="tabScanCnt" style="display:none">0</span></button>
+        </div>
+        <span class="spacer"></span>
+        <span class="meta" id="leaseHint">等待 BMC 请求…</span>
+      </div>
+      <div class="body" id="leaseBody">
+        <div class="empty" id="leaseEmpty">
+          <b>还没有设备来要地址</b>
+          <ul>
+            <li>网线插在左边选中的那个口上了吗（链路要 active）</li>
+            <li>BMC 可能被设成了静态 IP：切到上面的「IP 探测」标签，它会自己扫出来</li>
+            <li>BMC 里的 DHCP 开关是开着的吗（iDRAC/iLO → Network → IPv4 → DHCP）</li>
+            <li>共享管理口（shared LOM）要插业务网卡 1 号口</li>
+          </ul>
+        </div>
+        <table id="leaseTable" style="display:none">
+          <thead><tr>
+            <th>IP</th><th>MAC</th><th>状态</th><th>剩余</th><th>主机名</th>
+            <th>厂商</th><th>端口</th><th>操作</th>
+          </tr></thead>
+          <tbody id="leaseRows"></tbody>
+        </table>
+      </div>
+
+      <div class="body" id="scanBody" style="display:none">
+        <div class="scan-ctl">
+          <div class="field">
+            <label for="scanCidrs">要扫的网段（任何网段都行，逗号分隔；最大 /16）</label>
+            <div class="inline">
+              <input type="text" id="scanCidrs" placeholder="192.168.0.0/16 或 192.168.0.0/24, 10.1.1.0/24" spellcheck="false">
+              <input type="number" id="scanListen" min="1" max="60" step="1" value="8"
+                     title="被动侦听时长（秒）" style="width:66px">
+              <button class="btn primary small" id="scanStart" type="button">开始探测</button>
+              <button class="btn danger small" id="scanStop" type="button" style="display:none">停止</button>
+            </div>
+            <div class="presets">
+              <button class="chip" id="scanPresetLocal" type="button" title="本机这块网卡所在的网段">本机网段</button>
+              <button class="chip" id="scanPresetWide" type="button" title="192.168.0.0/16，约 1～2 分钟，覆盖绝大多数家用/办公/机房规划">整个 192.168.0.0/16</button>
+              <button class="chip" id="scanPresetFactory" type="button" title="出厂默认 + 常见规划的几个 /24">常见出厂几段</button>
+              <button class="chip" id="scanPresetClear" type="button">清空</button>
+            </div>
+          </div>
+          <div class="checks">
+            <label class="check"><input type="checkbox" id="scanGuess" checked
+              title="打几十个厂商出厂地址，秒级出结果，命中率最高">先试常见出厂地址</label>
+            <label class="check"><input type="checkbox" id="scanNeighbors" checked
+              title="IPv6 all-nodes + 广播 ICMP：完全不看它的 IPv4 配成什么">IPv6/广播探测</label>
+            <label class="check"><input type="checkbox" id="scanPassive" checked>侦听 ARP/mDNS/LLDP</label>
+            <label class="check"><input type="checkbox" id="scanActive" checked>ARP 扫网段</label>
+            <label class="check"><input type="checkbox" id="scanProbe" checked>识别厂商/端口</label>
+          </div>
+          <div class="scan-progress">
+            <div class="msg" id="scanMsg">还没探测。开机后机器会自己喊「我是谁」，扫一下就知道它在哪个地址。</div>
+            <div class="bar"><i id="scanBar"></i></div>
+          </div>
+        </div>
+        <div class="scan-note" id="scanAlias" style="display:none">
+          <span id="scanAliasText"></span>
+          <button class="btn small ghost" id="scanCleanup" type="button">摘掉临时地址</button>
+        </div>
+        <div class="scan-note v6panel" id="scanV6" style="display:none">
+          <div class="v6head">IPv6 邻居：跟它 IPv4 配成什么完全无关，能直连</div>
+          <div id="scanV6Rows"></div>
+        </div>
+        <div class="scan-err" id="scanErr" style="display:none"></div>
+        <table id="scanTable" class="scan-results" style="display:none">
+          <thead><tr>
+            <th>IP</th><th>MAC</th><th>身份</th><th>主机名</th>
+            <th>端口</th><th>发现方式</th><th>操作</th>
+          </tr></thead>
+          <tbody id="scanRows"></tbody>
+        </table>
+        <div class="empty" id="scanEmpty">
+          <b id="scanEmptyTitle">点「开始探测」</b>
+          <ul id="scanTips">
+            <li><b>地址不是 192.168 也没关系</b>：这台机器的静态 IP 可能是上一家单位留下的任何值，下面五招覆盖不同情况</li>
+            <li><b>最稳的一招</b>：让机器自己喊 —— 点开始后 <b>把 BMC 断电重启</b>，它上电时会发 gratuitous ARP / ARP 探测 / DHCP，二层广播，被动侦听直接听到它的地址，不需要知道任何网段</li>
+            <li><b>先试常见出厂地址</b>：几十个包、1 秒出结果，命中率最高（iDRAC 192.168.0.120、iBMC 192.168.2.100、XCC 192.168.70.125 之类）</li>
+            <li><b>IPv6/广播探测</b>：跟它 IPv4 配成什么完全无关。拿到 link-local 就能用 https://[fe80::…] 打开管理页</li>
+            <li><b>扫大网段</b>：真不知道就填 <code>192.168.0.0/16</code>，会分 128 批扫完，能随时停；跨不出 /16 才有意义</li>
+          </ul>
+          <ul id="scanTrouble" style="display:none">
+            <li>网线真的插在这个口上了吗（顶上的链接状态要 active）</li>
+            <li>地址可能是任何值：试试 <code>192.168.0.0/16</code>，或者断电重启 BMC 让它自己喊一遍</li>
+            <li>交换机/AP 做了端口隔离，广播过不去：一根线直连最稳</li>
+            <li>BMC 的网口没启用，或者机器还没上电</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- 右下：日志 -->
+    <section class="panel logs">
+      <div class="head">日志<span class="spacer"></span>
+        <button class="btn small ghost" id="copyLog">复制</button>
+        <button class="btn small ghost" id="clearLog">清空</button>
+      </div>
+      <div class="body"><div class="log" id="logBox"></div></div>
+    </section>
+  </main>
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <div class="mhead"><div class="title" id="modalTitle">探测结果</div><div class="spacer" style="flex:1"></div>
+      <button class="btn small ghost" id="modalClose">关闭</button></div>
+    <div class="mbody" id="modalBody"></div>
+    <div class="mfoot" id="modalFoot"></div>
+  </div>
+</div>
+
+<div class="toasts" id="toasts"></div>
+
+<script>
+(function () {
+  "use strict";
+
+  const $ = (id) => document.getElementById(id);
+  const QUERY = new URLSearchParams(location.search);
+  const TOKEN = QUERY.get("t") || "";
+  const SHOW_ALL = QUERY.get("all") === "1";   // 调试/特殊网卡：把 lo0、桥接口也列出来
+  const POLL_MS = 900;
+
+  let wantedIface = "";     // 上次选的网卡（localStorage 里存的）
+  let wantedService = "";   // 上次选的服务名：扩展坞换 en 号时靠它选回来
+
+  const S = {
+    state: "idle",
+    cursor: 0,
+    leases: new Map(),
+    timer: null,
+    busy: false,
+    pollSeq: 0,
+    appliedSeq: 0,
+    lastAckAt: 0,
+    startedAt: 0,
+    logLines: 0,
+    ifaces: [],
+    candidates: [],
+    platform: "",
+    enum: null,
+    authError: "",     // 后台说令牌不对（403）时填这里：别再冒充「后台服务已断开」
+    tab: "leases",
+    scanRows: new Map(),
+    scanOrder: "",
+    autoCidrs: "",
+    scanBusy: false,
+  };
+
+  // ---------------- 基础 ----------------
+
+  function toast(text, kind) {
+    const el = document.createElement("div");
+    el.className = "toast" + (kind ? " " + kind : "");
+    el.textContent = text;
+    $("toasts").appendChild(el);
+    setTimeout(() => {
+      el.style.transition = "opacity .2s";
+      el.style.opacity = "0";
+      setTimeout(() => el.remove(), 220);
+    }, kind === "err" ? 6000 : 3200);
+  }
+
+  const API_TIMEOUT_GET = 8000;      // 读接口：8 秒够了（网卡枚举慢说明后端有问题）
+  const API_TIMEOUT_POST = 30000;    // 启动要改网卡地址 + 回读，给足时间
+
+  async function api(path, body, options) {
+    const cfg = options || {};
+    const timeout = cfg.timeout === undefined
+      ? (body === undefined ? API_TIMEOUT_GET : API_TIMEOUT_POST)
+      : cfg.timeout;
+    const opts = {
+      method: body === undefined ? "GET" : "POST",
+      headers: { "X-BMCD-Token": TOKEN },
+      cache: "no-store",
+    };
+    if (body !== undefined) {
+      opts.headers["Content-Type"] = "application/json";
+      opts.body = JSON.stringify(body);
+    }
+    let timer = null;
+    if (typeof AbortController !== "undefined" && timeout > 0) {
+      const controller = new AbortController();
+      opts.signal = controller.signal;
+      timer = setTimeout(() => controller.abort(), timeout);
+    }
+    let resp;
+    try {
+      resp = await fetch(path, opts);
+    } catch (e) {
+      if (e && (e.name === "AbortError" || e.name === "TimeoutError")) {
+        throw new Error("请求超时（" + Math.round(timeout / 1000) + " 秒）：" + path);
+      }
+      throw new Error("连不上后台服务（可能已经退出）");
+    } finally {
+      if (timer) clearTimeout(timer);
+    }
+    let data = null;
+    try {
+      data = await resp.json();
+    } catch (e) {
+      data = null;
+    }
+    if (!resp.ok) {
+      const msg = (data && data.error) || ("请求失败：HTTP " + resp.status);
+      const err = new Error(msg);
+      // 401/403 是「没带令牌」而不是「后台挂了」，调用方要分开提示
+      err.status = resp.status;
+      err.auth = resp.status === 401 || resp.status === 403;
+      throw err;
+    }
+    return data || {};
+  }
+
+  function sleep(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  function fmtTime(ts) {
+    const d = new Date(ts * 1000);
+    const p = (n) => String(n).padStart(2, "0");
+    return p(d.getHours()) + ":" + p(d.getMinutes()) + ":" + p(d.getSeconds());
+  }
+
+  function fmtUptime(sec) {
+    if (!sec || sec < 0) return "—";
+    const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60), s = sec % 60;
+    if (h) return h + "h" + String(m).padStart(2, "0") + "m";
+    if (m) return m + "m" + String(s).padStart(2, "0") + "s";
+    return s + "s";
+  }
+
+  function safeUrl(u) {
+    if (!u) return "";
+    try {
+      const url = new URL(u, location.href);
+      if (url.protocol === "http:" || url.protocol === "https:") return url.href;
+    } catch (e) { /* ignore */ }
+    return "";
+  }
+
+  // ---------------- 表单 ----------------
+
+  const FORM_IDS = ["iface", "subnet", "pool", "lease", "engine", "serverIp", "domain",
+    "dns", "routers", "hostnamePrefix", "configure", "restore", "autoStop", "probeRetry"];
+
+  function formValues() {
+    const num = (v) => (v === "" ? 0 : Number(v));
+    const sel = $("iface");
+    const manual = ($("ifaceManual") ? $("ifaceManual").value : "").trim();
+    return {
+      iface: manual || sel.value,
+      iface_service: manual ? "" : (sel.selectedOptions[0] ? (sel.selectedOptions[0].dataset.service || "") : ""),
+      subnet: $("subnet").value.trim(),
+      pool: $("pool").value.trim(),
+      lease_seconds: num($("lease").value) || 300,
+      engine: $("engine").value,
+      server_ip: $("serverIp").value.trim(),
+      domain: $("domain").value.trim(),
+      dns: $("dns").value.split(",").map((x) => x.trim()).filter(Boolean),
+      routers: $("routers").value.split(",").map((x) => x.trim()).filter(Boolean),
+      auto_router: !$("routers").value.trim(),
+      hostname_prefix: $("hostnamePrefix").value.trim() || "bmc",
+      configure: $("configure").checked,
+      restore: $("restore").checked,
+      probe_retry: num($("probeRetry").value),
+    };
+  }
+
+  function saveForm() {
+    try {
+      localStorage.setItem("bmcd.showAll", $("showAllIfaces").checked ? "1" : "0");
+      localStorage.setItem("bmcd.ifaceManual", $("ifaceManual").value || "");
+      localStorage.setItem("bmcd.form", JSON.stringify(formValues()));
+      localStorage.setItem("bmcd.autoStop", $("autoStop").checked ? "1" : "0");
+    } catch (e) { /* 隐私模式可能禁用 */ }
+  }
+
+  function loadForm() {
+    let saved = null;
+    try {
+      saved = JSON.parse(localStorage.getItem("bmcd.form") || "null");
+      const auto = localStorage.getItem("bmcd.autoStop");
+      if (auto !== null) $("autoStop").checked = auto === "1";
+      $("showAllIfaces").checked = localStorage.getItem("bmcd.showAll") === "1";
+      $("ifaceManual").value = localStorage.getItem("bmcd.ifaceManual") || "";
+    } catch (e) { saved = null; }
+    if (!saved) return;
+    if (typeof saved.iface === "string") wantedIface = saved.iface;
+    if (typeof saved.iface_service === "string") wantedService = saved.iface_service;
+    const set = (id, v) => { const el = $(id); if (el && v !== undefined && v !== null) el.value = v; };
+    set("subnet", saved.subnet);
+    set("pool", saved.pool);
+    set("lease", saved.lease_seconds);
+    set("engine", saved.engine);
+    set("serverIp", saved.server_ip);
+    set("domain", saved.domain);
+    set("hostnamePrefix", saved.hostname_prefix);
+    set("probeRetry", saved.probe_retry);
+    if (Array.isArray(saved.dns)) $("dns").value = saved.dns.join(", ");
+    if (Array.isArray(saved.routers)) $("routers").value = saved.routers.join(", ");
+    if (typeof saved.configure === "boolean") $("configure").checked = saved.configure;
+    if (typeof saved.restore === "boolean") $("restore").checked = saved.restore;
+  }
+
+  function setFormEnabled(enabled) {
+    FORM_IDS.forEach((id) => { const el = $(id); if (el) el.disabled = !enabled; });
+    $("refreshIfaces").disabled = !enabled;
+  }
+
+  // ---------------- 网卡 ----------------
+
+  function ifaceOption(value, text, extra) {
+    const opt = document.createElement("option");
+    opt.value = value;
+    opt.textContent = text;
+    if (extra) Object.keys(extra).forEach((k) => { opt[k] = extra[k]; });
+    return opt;
+  }
+
+  function renderIfaceError(message) {
+    // 失败时**不能**只弹一个 6 秒 toast 就把空下拉框留在那儿：
+    // 用户根本分不清「没有网卡」和「读不到网卡」，也不知道可以手填。
+    S.ifacesError = message;
+    S.ifaces = [];
+    S.candidates = [];
+    const sel = $("iface");
+    sel.textContent = "";
+    sel.appendChild(ifaceOption("", "— 读不到网卡列表 —"));
+    $("ifaceCount").textContent = "读不到网卡";
+    $("ifaceHint").textContent =
+      "读取网卡失败：" + message + " —— 可以在下面手填网卡名（例如 以太网 2）";
+    $("ifaceManualRow").style.display = "";
+  }
+
+  async function loadIfaces(keepSelection, options) {
+    const cfg = options || {};
+    const sel = $("iface");
+    const prev = keepSelection ? sel.value : "";
+    const prevService = keepSelection && sel.selectedOptions[0]
+      ? (sel.selectedOptions[0].dataset.service || "") : "";
+
+    // 请求期间先画 loading 态：不然请求越慢，用户盯着空白框的时间越长
+    sel.textContent = "";
+    sel.appendChild(ifaceOption("", "正在读取网卡…"));
+    $("ifaceCount").textContent = "正在读取…";
+    $("ifaceHint").textContent = "正在读取网卡列表…";
+    $("ifaceManualRow").style.display = "";
+
+    let data = null;
+    let errMsg = "";
+    try {
+      data = await api("/api/ifaces" + (cfg.force ? "?refresh=1" : ""));
+    } catch (e) {
+      errMsg = (e && e.message) || "读取网卡失败";
+    }
+    if (errMsg && cfg.retry !== false) {
+      // 一次自动重试：后端可能正在冷启动/被首个请求唤醒
+      await sleep(1200);
+      try {
+        data = await api("/api/ifaces?refresh=1");
+        errMsg = "";
+      } catch (e2) {
+        errMsg = (e2 && e2.message) || errMsg;
+      }
+    }
+    if (errMsg || !data) {
+      renderIfaceError(errMsg || "后端没有返回数据");
+      return;
+    }
+
+    S.platform = data.platform || S.platform;
+    S.enum = data.enum || null;
+    S.ifaces = data.ifaces || [];
+    S.candidates = data.candidates || [];
+    S.ifacesError = data.error || "";
+    S.ifacesSource = data.source || "";
+    const ok = data.ok !== false;
+
+    sel.textContent = "";
+    // 只滤掉真正没意义的（环回、mac 上的 BSD 隧道/桥接口）；
+    // 虚拟网卡和 Wi-Fi 绝不直接隐藏 —— 上一版把它们滤掉，结果在
+    // Hyper-V / 只插无线 / 虚拟网卡当唯一网口的机器上下拉框是空的。
+    const isMac = S.platform === "macos";
+    const noise = (i) => i.loopback ||
+      (isMac && /^(lo|gif|stf|utun|awdl|llw|ap1|anpi|bridge)/.test(i.name));
+    const all = S.ifaces.filter((i) => !noise(i));
+    const preferred = all.filter((i) => !i.wifi && !i.virtual && !i.tunnel);
+    const autoAll = preferred.length === 0 && all.length > 0;
+    if (autoAll && $("showAllIfaces") && !$("showAllIfaces").checked) {
+      $("showAllIfaces").checked = true;      // 一个「正经」网口都没有 → 自动全列
+    }
+    const wantAll = SHOW_ALL || ($("showAllIfaces") && $("showAllIfaces").checked);
+    const list = (wantAll || autoAll) ? all.slice() : preferred.slice();
+    const rank = (i) => (i.default_route ? 4 : 0) + (i.virtual || i.wifi ? 2 : 0)
+      + (i.has_link ? 0 : 1);
+    list.sort((a, b) => rank(a) - rank(b) || String(a.name).localeCompare(String(b.name)));
+
+    list.forEach((i) => {
+      const tags = [];
+      if (S.candidates.includes(i.name)) tags.push("有链路");
+      if (i.ipv4) tags.push(i.ipv4);
+      if (i.virtual) tags.push("虚拟");
+      if (i.tunnel) tags.push("隧道");
+      if (i.wifi) tags.push("Wi-Fi");
+      if (!i.has_link) tags.push("无链路");
+      if (i.default_route) tags.push("默认路由");
+      const text = i.name + (i.service && i.service !== i.name ? " · " + i.service : "")
+        + (tags.length ? "  (" + tags.join(", ") + ")" : "");
+      const opt = ifaceOption(i.name, text);
+      opt.dataset.service = i.service || "";
+      sel.appendChild(opt);
+    });
+
+    let pick = prev && list.some((i) => i.name === prev) ? prev : "";
+    if (!pick && prevService) {
+      const byService = list.find((i) => i.service === prevService);
+      if (byService) pick = byService.name;
+    }
+    if (!pick && wantedIface) {
+      const direct = list.find((i) => i.name === wantedIface);
+      if (direct) pick = direct.name;
+      else {
+        const bySavedService = list.find((i) => i.service && i.service === wantedService);
+        if (bySavedService) pick = bySavedService.name;
+      }
+    }
+    if (!pick && S.candidates.length) pick = S.candidates[0];
+    if (!pick) {
+      // 没有「插着网线、非 Wi-Fi、非虚拟」的口时，**不要替用户乱选**。
+      // 以前会选中第一个（甚至可能是 Wi-Fi 默认路由口），一按启动就把
+      // 上网用的那块网卡地址改掉，直接断网。
+      const good = list.find((i) => i.has_link && !i.wifi && !i.virtual && !i.tunnel);
+      if (good) pick = good.name;
+    }
+    if (pick) {
+      sel.value = pick;
+    } else {
+      // 0 个可用网卡 / 全部不可自动挑选时，下拉框里**必须有一条占位项**，
+      // 否则就是一个白框，用户会以为界面坏了。
+      const ph = ifaceOption("", list.length
+        ? "— 请选择网卡（现在没有可用的有线口）—"
+        : "— 没有读到网卡（可在下面手填网卡名）—");
+      sel.insertBefore(ph, sel.firstChild);
+      sel.value = "";
+    }
+
+    const empty = list.length === 0;
+    $("ifaceManualRow").style.display = (empty || wantAll || !ok) ? "" : "none";
+    $("ifaceCount").textContent = empty
+      ? "读不到网卡"
+      : (list.length + " 个网口" + (wantAll ? "（含虚拟/Wi-Fi）" : "")
+         + (ok ? "" : "（枚举失败）"));
+
+    const chosen = list.find((i) => i.name && i.name === sel.value);
+    if (!chosen) {
+      if (S.ifacesError) {
+        $("ifaceHint").textContent = "读不到完整网卡列表：" + S.ifacesError
+          + " —— 可以直接在下面手填网卡名";
+      } else if (list.length) {
+        $("ifaceHint").textContent =
+          "列出来的这些口现在都没有链路 —— 把 BMC 网线插好再点「刷新」；知道网卡名也可以直接手填";
+      } else {
+        $("ifaceHint").textContent =
+          "系统里没找到网卡。插上 USB 网卡后点「刷新」，或直接在下面手填网卡名";
+      }
+    } else if (chosen.default_route) {
+      $("ifaceHint").textContent = "注意：这是上网用的默认路由口，启动会改它的地址（会断网）";
+    } else if (chosen.virtual) {
+      $("ifaceHint").textContent = "这是虚拟网卡（Hyper-V/VMware/VPN 之类）。如果 BMC 网线是桥接进来的，选它没错";
+    } else if (chosen.tunnel) {
+      $("ifaceHint").textContent = "这是隧道适配器（isatap/teredo），BMC 不会接在它上面";
+    } else if (chosen.wifi) {
+      $("ifaceHint").textContent = "这是 Wi-Fi 口，BMC 一般不会接在无线上";
+    } else if (!chosen.has_link) {
+      $("ifaceHint").textContent = "这个口现在没有链路（status=" + (chosen.link || "?") + "），先插好网线";
+    } else {
+      $("ifaceHint").textContent = chosen.mac ? "MAC " + chosen.mac : "";
+    }
+    applyDefaultCidrs();
+  }
+
+  // ---------------- 状态渲染 ----------------
+
+  function applyState(s) {
+    const prev = S.state;
+    S.state = s.state || "idle";
+    S.startedAt = S.state === "running" && prev !== "running" ? (s.server_time - (s.uptime || 0)) : S.startedAt;
+
+    const pill = $("statePill");
+    pill.className = "pill " + S.state;
+    const labels = { idle: "未运行", starting: "启动中…", running: "运行中", stopping: "停止中…", error: "出错" };
+    $("stateText").textContent = labels[S.state] || S.state;
+
+    const running = S.state === "running" || S.state === "starting";
+    $("startBtn").style.display = running ? "none" : "";
+    $("stopBtn").style.display = running ? "" : "none";
+    $("startBtn").disabled = S.state === "starting" || S.state === "stopping" || S.busy;
+    $("stopBtn").disabled = S.state === "starting" || S.busy;
+    setFormEnabled(!running && S.state !== "stopping");
+
+    // header meta：跑着的时候是当前配置，停了就标成“上次”
+    const bits = [];
+    const prefix = S.state === "running" ? "" : "上次：";
+    if (s.config) bits.push("本机 <b>" + escapeHtml(s.config.server_ip) + "</b>");
+    if (s.iface) bits.push("网卡 <b>" + escapeHtml(s.iface.name) + "</b>");
+    if (S.state === "running" && s.engine) bits.push("引擎 <b>" + escapeHtml(s.engine) + "</b>");
+    $("headMeta").innerHTML = bits.length ? prefix + bits.join("  ·  ") : "";
+
+    // cards
+    $("statBound").textContent = (s.stats && s.stats.bound) || 0;
+    $("statPool").textContent = (s.stats && s.stats.pool) || 0;
+    $("statUptime").textContent = S.state === "running" ? fmtUptime(s.uptime) : "—";
+    $("statEngine").textContent = S.state === "running" ? (s.engine || "—") : "—";
+
+    // banners
+    const banner = $("banner");
+    const caps = s.capabilities || {};
+    if (S.state === "error" && s.error) {
+      showBanner("err", "<b>启动失败：</b>" + escapeHtml(s.error));
+    } else if (!caps.root) {
+      showBanner("warn", "<b>当前不是管理员权限</b>：只能看，改网卡地址和抓 DHCP 包都会失败。"
+        + (caps.platform === "windows"
+          ? "关掉这个窗口，右键 <b>bmcd.cmd</b>（或「BMC DHCP」快捷方式）选「以管理员身份运行」。"
+          : "点右上角「退出」，再双击一次 App，在系统弹框里输入密码即可。"));
+    } else if (S.authError) {
+      // 正常到不了这里（没令牌连 /api/state 都读不到），留着是为了状态机完整
+      showBanner("warn", "<b>缺少访问令牌</b>：" + escapeHtml(S.authError));
+    } else {
+      hideBanner();
+    }
+
+    renderLeases(s.leases || []);
+    renderLogs(s.logs || [], s.cursor || 0);
+    renderScan(s.scan);
+    updateLeaseHint(s);
+  }
+
+  function showBanner(kind, html) {
+    const b = $("banner");
+    b.className = "banner show " + kind;
+    b.innerHTML = html;
+  }
+  function hideBanner() { $("banner").className = "banner"; }
+
+  function escapeHtml(s) {
+    return String(s === undefined || s === null ? "" : s).replace(/[&<>"']/g, (c) => ({
+      "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
+    }[c]));
+  }
+
+  function updateLeaseHint(s) {
+    const n = (s.leases || []).length;
+    const el = $("leaseHint");
+    if (S.state !== "running") { el.textContent = n ? n + " 条历史记录" : "服务未启动"; return; }
+    if (!n) { el.textContent = "等待 BMC 请求…"; return; }
+    const bound = (s.stats && s.stats.bound) || 0;
+    el.textContent = bound + " 个已绑定 / 共 " + n + " 条";
+  }
+
+  // ---------------- IP 探测 ----------------
+
+  const SRC_LABEL = {
+    "arp-announce": "ARP 宣告", "arp-probe": "ARP 探测", "arp": "ARP",
+    "arp-scan": "扫描", "mdns": "mDNS", "lldp": "LLDP", "ssdp": "SSDP", "nbns": "NBNS",
+    "guess": "猜出厂", "broadcast": "广播应答",
+  };
+
+  function scanFormValues() {
+    return {
+      cidrs: $("scanCidrs").value.trim(),
+      duration: Math.max(1, Math.min(60, Number($("scanListen").value) || 8)),
+      guess: $("scanGuess").checked,
+      neighbors: $("scanNeighbors").checked,
+      passive: $("scanPassive").checked,
+      active: $("scanActive").checked,
+      probe: $("scanProbe").checked,
+    };
+  }
+
+  function saveScanForm() {
+    try { localStorage.setItem("bmcd.scan", JSON.stringify(scanFormValues())); } catch (e) { /* ignore */ }
+  }
+
+  function loadScanForm() {
+    let saved = null;
+    try { saved = JSON.parse(localStorage.getItem("bmcd.scan") || "null"); } catch (e) { saved = null; }
+    if (!saved) return;
+    if (typeof saved.cidrs === "string") $("scanCidrs").value = saved.cidrs;
+    if (saved.duration) $("scanListen").value = saved.duration;
+    if (typeof saved.guess === "boolean") $("scanGuess").checked = saved.guess;
+    if (typeof saved.neighbors === "boolean") $("scanNeighbors").checked = saved.neighbors;
+    if (typeof saved.passive === "boolean") $("scanPassive").checked = saved.passive;
+    if (typeof saved.active === "boolean") $("scanActive").checked = saved.active;
+    if (typeof saved.probe === "boolean") $("scanProbe").checked = saved.probe;
+  }
+
+  // 常用网段预设：BMC 的地址可能是任何值，所以给几个不同「猜法」的一键入口
+  const FACTORY_PRESET = "192.168.0.0/24, 192.168.1.0/24, 192.168.2.0/24, " +
+    "192.168.10.0/24, 192.168.70.0/24, 192.168.100.0/24, 10.0.0.0/24, 172.16.0.0/24";
+
+  function applyPreset(kind) {
+    const el = $("scanCidrs");
+    const chosen = S.ifaces.find((i) => i.name === $("iface").value);
+    if (kind === "local") {
+      const own = chosen && chosen.ipv4
+        ? (chosen.ipv4.replace(/\d+$/, "0") + "/24") : "";
+      el.value = own || ((chosen && (chosen.scan_cidrs || [])[0]) || "");
+    } else if (kind === "wide") {
+      el.value = "192.168.0.0/16";
+    } else if (kind === "factory") {
+      el.value = FACTORY_PRESET;
+    } else {
+      el.value = "";
+    }
+    S.autoCidrs = el.value;
+    saveScanForm();
+  }
+
+  // 网段默认值跟着网卡走，但用户手改过就别覆盖
+  function applyDefaultCidrs() {
+    const chosen = S.ifaces.find((i) => i.name === $("iface").value);
+    if (!chosen) return;
+    const list = (chosen.scan_cidrs || []).slice(0, 3).join(", ");
+    const cur = $("scanCidrs").value.trim();
+    if (!cur || cur === S.autoCidrs) {
+      $("scanCidrs").value = list;
+      S.autoCidrs = list;
+    }
+  }
+
+  function setTab(name) {
+    S.tab = name === "scan" ? "scan" : "leases";
+    $("leaseBody").style.display = S.tab === "leases" ? "" : "none";
+    $("scanBody").style.display = S.tab === "scan" ? "" : "none";
+    $("tabLeases").classList.toggle("active", S.tab === "leases");
+    $("tabScan").classList.toggle("active", S.tab === "scan");
+    $("leaseHint").style.display = S.tab === "leases" ? "" : "none";
+    try { localStorage.setItem("bmcd.tab", S.tab); } catch (e) { /* ignore */ }
+  }
+
+  function scanPercent(scan) {
+    if (scan.state === "running") {
+      const total = scan.total || 0, done = scan.done || 0;
+      if (scan.phase === "passive") return total ? Math.min(14, 14 * done / total) : 8;
+      if (scan.phase === "guess") return total ? Math.min(28, 14 + 14 * done / total) : 22;
+      if (scan.phase === "neighbors") return 34;
+      if (scan.phase === "sweep") return total ? 34 + 50 * done / total : 50;
+      if (scan.phase === "probe") return 84;
+      if (scan.phase === "alias") return 94;
+      return 6;
+    }
+    return scan.state && scan.state !== "idle" ? 100 : 0;
+  }
+
+  function renderScan(scan) {
+    scan = scan || {};
+    const running = scan.state === "running";
+    const hits = scan.hits || [];
+
+    $("scanStart").style.display = running ? "none" : "";
+    $("scanStop").style.display = running ? "" : "none";
+    $("scanStart").disabled = running || !TOKEN || S.scanBusy;
+    $("scanCidrs").disabled = running;
+    $("scanListen").disabled = running;
+    ["scanGuess", "scanNeighbors", "scanPassive", "scanActive", "scanProbe"]
+      .forEach((id) => { $(id).disabled = running; });
+    ["scanPresetLocal", "scanPresetWide", "scanPresetFactory", "scanPresetClear"]
+      .forEach((id) => { if ($(id)) $(id).disabled = running; });
+
+    const elapsed = typeof scan.elapsed === "number" ? scan.elapsed : 0;
+    const msg = scan.message || (running ? "探测中…" : "还没探测。");
+    $("scanMsg").textContent = msg + (scan.state && scan.state !== "idle" ? "  ·  " + Math.round(elapsed) + "s" : "");
+    $("scanBar").style.width = scanPercent(scan) + "%";
+
+    const al = scan.aliases || [];
+    if (al.length) {
+      $("scanAlias").style.display = "";
+      $("scanAliasText").textContent = "已临时加地址 " + al.map((a) => a.ip + "（" + a.cidr + "）").join("、")
+        + "，点「打开」就能连管理页；退出 App 会自动摘掉。";
+    } else {
+      $("scanAlias").style.display = "none";
+    }
+
+    const errs = scan.errors || [];
+    if (errs.length) {
+      $("scanErr").style.display = "";
+      $("scanErr").textContent = errs.slice(0, 4).join("\n");
+    } else {
+      $("scanErr").style.display = "none";
+    }
+
+    renderScanV6(scan.v6 || []);
+
+    const cnt = $("tabScanCnt");
+    if (hits.length) { cnt.style.display = ""; cnt.textContent = String(hits.length); }
+    else { cnt.style.display = "none"; }
+
+    renderScanRows(hits, scan);
+  }
+
+  function renderScanV6(list) {
+    const box = $("scanV6");
+    const rows = $("scanV6Rows");
+    if (!box || !rows) return;
+    const items = (Array.isArray(list) ? list : []);
+    if (!items.length) { box.style.display = "none"; rows.textContent = ""; return; }
+    box.style.display = "";
+    rows.textContent = "";
+    items.slice(0, 16).forEach((it) => {
+      const row = document.createElement("div");
+      row.className = "v6row";
+      const a = document.createElement("span");
+      a.className = "a";
+      a.textContent = it.addr || "";
+      const m = document.createElement("span");
+      m.className = "m";
+      m.textContent = it.mac || "";
+      row.appendChild(a);
+      if (it.mac) row.appendChild(m);
+      // 注意：不要过 safeUrl —— `new URL("https://[fe80::1%25en7]/")` 会抛，
+      // 而这正是最需要「打开」按钮的情形（BMC 基本只有 link-local IPv6）。
+      // 链接是后端用 _v6_url() 从 IPv6 地址拼出来的，只可能是 https://[…]
+      const raw = String(it.link || "");
+      const url = /^https:\/\/\[[0-9a-zA-Z:.%_-]+\]\/?$/.test(raw) ? raw : safeUrl(raw);
+      const mk = (label, fn) => {
+        const el = document.createElement("a");
+        el.className = "op";
+        el.href = "#";
+        el.textContent = label;
+        el.addEventListener("click", (ev) => { ev.preventDefault(); fn(); });
+        return el;
+      };
+      if (url) {
+        row.appendChild(mk("打开", () => window.open(url, "_blank", "noopener")));
+      }
+      row.appendChild(mk("复制", () => copyText(it.link || it.addr || "")));
+      rows.appendChild(row);
+    });
+    if (items.some((it) => String(it.addr || "").toLowerCase().startsWith("fe80"))) {
+      const hint = document.createElement("div");
+      hint.className = "v6head";
+      hint.style.marginTop = "6px";
+      hint.style.color = "#6f8aa6";
+      hint.textContent = "fe80:: 开头是链路本地地址，部分浏览器不认 %en7 这种写法 —— 点「复制」可以贴到别的工具里用。";
+      rows.appendChild(hint);
+    }
+  }
+
+  function renderScanRows(hits, scan) {
+    const tbody = $("scanRows");
+    const table = $("scanTable");
+    const empty = $("scanEmpty");
+    if (!hits.length) {
+      table.style.display = "none";
+      empty.style.display = "";
+      tbody.textContent = "";
+      S.scanRows.clear();
+      const finished = !!(scan && scan.state && scan.state !== "idle" && scan.state !== "running");
+      const v6n = (scan && scan.v6 || []).length;
+      $("scanEmptyTitle").textContent = v6n
+        ? ("没扫到 IPv4 设备，但发现了 " + v6n + " 个 IPv6 邻居 —— 用上面那块直接连")
+        : (finished ? "这次没扫到设备" : "点「开始探测」");
+      $("scanTips").style.display = finished ? "none" : "";
+      $("scanTrouble").style.display = finished ? "" : "none";
+      return;
+    }
+    table.style.display = "";
+    empty.style.display = "none";
+
+    const seen = new Set();
+    hits.forEach((h) => {
+      seen.add(h.ip);
+      let entry = S.scanRows.get(h.ip);
+      if (!entry) {
+        const tr = document.createElement("tr");
+        tr.innerHTML =
+          '<td class="ip mono"></td>' +
+          '<td class="mac mono"></td>' +
+          '<td class="who"></td>' +
+          '<td class="host mono"></td>' +
+          '<td class="ports mono"></td>' +
+          '<td class="src"></td>' +
+          '<td class="ops"></td>';
+        entry = {
+          tr,
+          ip: tr.querySelector(".ip"),
+          mac: tr.querySelector(".mac"),
+          who: tr.querySelector(".who"),
+          host: tr.querySelector(".host"),
+          ports: tr.querySelector(".ports"),
+          src: tr.querySelector(".src"),
+          ops: tr.querySelector(".ops"),
+          key: "",
+        };
+        S.scanRows.set(h.ip, entry);
+        tbody.appendChild(tr);
+      }
+      setText(entry.ip, h.ip);
+      setText(entry.mac, h.mac || "—");
+      const who = h.vendor ? h.vendor + (h.confidence ? "(" + h.confidence + ")" : "")
+        : (h.alive ? "未知设备" : "—");
+      setText(entry.who, who);
+      entry.who.className = "who" + (h.vendor ? " vendor" : "");
+      // arp_error 单独一行告警：跟 summary（设备画像）不是一回事
+      const arpWarn = h.arp_error ? ["⚠ ARP 查不了：" + h.arp_error] : [];
+      const tip = [h.summary || ""].concat(h.evidence || []).concat(arpWarn)
+        .filter(Boolean).join("\n");
+      if (entry.who.title !== tip) entry.who.title = tip;
+      setText(entry.host, h.hostname || "—");
+      setText(entry.ports, (h.ports || []).join(",") || "—");
+      setText(entry.src, (h.sources || []).map((x) => SRC_LABEL[x] || x).join(" "));
+
+      const key = (h.url || "") + "|" + (h.probed ? "1" : "0");
+      if (entry.key !== key) {
+        entry.key = key;
+        const ops = entry.ops;
+        ops.textContent = "";
+        const url = safeUrl(h.url);
+        if (url) {
+          const a = document.createElement("a");
+          a.className = "op";
+          a.href = "#";
+          a.textContent = "打开";
+          a.addEventListener("click", (ev) => { ev.preventDefault(); window.open(url, "_blank", "noopener"); });
+          ops.appendChild(a);
+        }
+        const probe = document.createElement("a");
+        probe.className = "op";
+        probe.href = "#";
+        probe.textContent = "探测";
+        probe.addEventListener("click", (ev) => { ev.preventDefault(); doProbe(h.ip); });
+        ops.appendChild(probe);
+        const copy = document.createElement("a");
+        copy.className = "op";
+        copy.href = "#";
+        copy.textContent = "复制IP";
+        copy.addEventListener("click", (ev) => { ev.preventDefault(); copyText(h.ip); });
+        ops.appendChild(copy);
+      }
+    });
+
+    S.scanRows.forEach((entry, ip) => {
+      if (!seen.has(ip)) {
+        entry.tr.remove();
+        S.scanRows.delete(ip);
+      }
+    });
+
+    // 服务端按「更像 BMC 的排前面」排好了序，跟着它排（顺序没变就不动 DOM）
+    const order = hits.map((h) => h.ip).join(",");
+    if (S.scanOrder !== order) {
+      S.scanOrder = order;
+      hits.forEach((h) => {
+        const entry = S.scanRows.get(h.ip);
+        if (entry) tbody.appendChild(entry.tr);
+      });
+    }
+  }
+
+  async function doScanStart() {
+    if (S.scanBusy) return;
+    const v = scanFormValues();
+    if (!v.passive && !v.active) {
+      toast("「侦听」和「扫网段」至少开一个", "err");
+      return;
+    }
+    saveScanForm();
+    S.scanBusy = true;
+    try {
+      await api("/api/scan/start", {
+        iface: $("iface").value,
+        cidrs: v.cidrs,
+        duration: v.duration,
+        passive: v.passive,
+        active: v.active,
+        probe: v.probe,
+      });
+      toast("开始探测…", "ok");
+    } catch (e) {
+      toast(e.message, "err");
+      $("scanErr").style.display = "";
+      $("scanErr").textContent = e.message;
+    } finally {
+      S.scanBusy = false;
+      await tick();
+    }
+  }
+
+  async function doScanStop() {
+    try {
+      await api("/api/scan/stop", {});
+      toast("已请求停止");
+    } catch (e) {
+      toast(e.message, "err");
+    }
+    await tick();
+  }
+
+  async function doScanCleanup() {
+    try {
+      const r = await api("/api/scan/cleanup", {});
+      const removed = r.removed || [];
+      toast(removed.length ? "已摘掉 " + removed.join("，") : "没有需要摘掉的地址", "ok");
+    } catch (e) {
+      toast(e.message, "err");
+    }
+    await tick();
+  }
+
+  // ---------------- 租约表 ----------------
+
+  function renderLeases(rows) {
+    const tbody = $("leaseRows");
+    const table = $("leaseTable");
+    const empty = $("leaseEmpty");
+    if (!rows.length) {
+      table.style.display = "none";
+      empty.style.display = "";
+      tbody.textContent = "";
+      S.leases.clear();
+      return;
+    }
+    table.style.display = "";
+    empty.style.display = "none";
+
+    const seen = new Set();
+    rows.forEach((row, idx) => {
+      seen.add(row.ip);
+      let entry = S.leases.get(row.ip);
+      if (!entry) {
+        const tr = document.createElement("tr");
+        tr.innerHTML =
+          '<td class="ip mono"></td>' +
+          '<td class="mac mono"></td>' +
+          '<td><span class="badge"></span></td>' +
+          '<td class="remain mono"></td>' +
+          '<td class="host mono"></td>' +
+          '<td><span class="vendor"></span><span class="conf"></span></td>' +
+          '<td class="ports mono"></td>' +
+          '<td class="ops"></td>';
+        const cells = {
+          ip: tr.querySelector(".ip"),
+          mac: tr.querySelector(".mac"),
+          badge: tr.querySelector(".badge"),
+          remain: tr.querySelector(".remain"),
+          host: tr.querySelector(".host"),
+          vendor: tr.querySelector(".vendor"),
+          conf: tr.querySelector(".conf"),
+          ports: tr.querySelector(".ports"),
+          ops: tr.querySelector(".ops"),
+        };
+        entry = { tr, cells, opsKey: "" };
+        S.leases.set(row.ip, entry);
+        tbody.appendChild(tr);
+      }
+      const c = entry.cells;
+      setText(c.ip, row.ip);
+      setText(c.mac, row.mac);
+      const historical = row.state === "历史";
+      const st = historical ? "idle" : (row.bound ? "bound" : (row.offers ? "offer" : "idle"));
+      c.badge.className = "badge " + st;
+      setText(c.badge, historical ? "历史" : (row.bound ? "已绑定" : (row.offers ? "OFFER" : "空闲")));
+      setText(c.remain, row.bound ? Math.max(0, row.remaining || 0) + "s" : "—");
+      setText(c.host, row.hostname || "—");
+      setText(c.vendor, row.vendor_guess || "—");
+      setText(c.conf, row.confidence ? "(" + row.confidence + ")" : "");
+      setText(c.ports, row.open_ports || "—");
+
+      const key = (row.url || "") + "|" + row.ip;
+      if (entry.opsKey !== key) {
+        entry.opsKey = key;
+        c.ops.textContent = "";
+        const url = safeUrl(row.url);
+        if (url) {
+          const a = document.createElement("a");
+          a.className = "op";
+          a.href = "#";
+          a.textContent = "打开管理页";
+          a.addEventListener("click", (ev) => { ev.preventDefault(); window.open(url, "_blank", "noopener"); });
+          c.ops.appendChild(a);
+        }
+        const probe = document.createElement("a");
+        probe.className = "op";
+        probe.textContent = "探测";
+        probe.href = "#";
+        probe.addEventListener("click", (ev) => { ev.preventDefault(); doProbe(row.ip); });
+        c.ops.appendChild(probe);
+        const copy = document.createElement("a");
+        copy.className = "op";
+        copy.textContent = "复制IP";
+        copy.href = "#";
+        copy.addEventListener("click", (ev) => { ev.preventDefault(); copyText(row.ip); });
+        c.ops.appendChild(copy);
+      }
+    });
+
+    S.leases.forEach((entry, ip) => {
+      if (!seen.has(ip)) {
+        entry.tr.remove();
+        S.leases.delete(ip);
+      }
+    });
+  }
+
+  function setText(el, text) {
+    const v = text === undefined || text === null ? "" : String(text);
+    if (el.textContent !== v) el.textContent = v;
+  }
+
+  // ---------------- 日志 ----------------
+
+  function renderLogs(entries, cursor) {
+    if (!entries.length && !S.logLines) {
+      if (cursor !== undefined) S.cursor = cursor;
+      return;
+    }
+    const box = $("logBox");
+    const atBottom = box.parentElement.scrollTop + box.parentElement.clientHeight >= box.parentElement.scrollHeight - 24;
+    entries.forEach((e) => {
+      const line = document.createElement("div");
+      line.className = "line " + (e.level || "info");
+      const t = document.createElement("span");
+      t.className = "t";
+      t.textContent = fmtTime(e.ts);
+      const m = document.createElement("span");
+      m.className = "m";
+      m.textContent = e.text;
+      line.appendChild(t);
+      line.appendChild(m);
+      box.appendChild(line);
+      S.logLines++;
+    });
+    while (S.logLines > 1200 && box.firstChild) {
+      box.removeChild(box.firstChild);
+      S.logLines--;
+    }
+    if (cursor !== undefined) S.cursor = cursor;
+    if (atBottom) box.parentElement.scrollTop = box.parentElement.scrollHeight;
+  }
+
+  function sysLog(text) {
+    renderLogs([{ ts: Date.now() / 1000, level: "sys", text }], S.cursor);
+  }
+
+  // ---------------- 轮询 ----------------
+
+  async function tick() {
+    const seq = ++S.pollSeq;
+    let s;
+    try {
+      s = await api("/api/state?since=" + S.cursor);
+    } catch (e) {
+      if (e && e.auth) {
+        // 后台还活着，只是这个页面没带对的令牌 —— 说清楚，别让人以为服务挂了
+        S.authError = e.message || "后台拒绝了这次请求";
+        showBanner("warn", "<b>缺少访问令牌</b>：" + escapeHtml(S.authError)
+          + "。请关掉这个标签页，从 App 里点「打开界面」进入。");
+        $("statePill").className = "pill warn";
+        $("stateText").textContent = "需令牌";
+        return;
+      }
+      if (!S.offline) {
+        S.offline = true;
+        S.cursor = 0;            // 重连后让服务端把日志重发一遍
+        showBanner("err", "<b>后台服务已断开</b>：" + escapeHtml(e.message) + "。重新启动 App 即可。");
+        $("statePill").className = "pill error";
+        $("stateText").textContent = "已断开";
+      }
+      return;
+    }
+    if (S.offline || S.authError) {
+      S.offline = false;
+      S.authError = "";
+      hideBanner();
+    }
+    if (seq < S.appliedSeq) return;   // 更旧的快照晚到，丢掉（防止“停止后又变回运行中”）
+    S.appliedSeq = seq;
+    applyState(s);
+  }
+
+  function schedule() {
+    clearTimeout(S.timer);
+    S.timer = setTimeout(async () => {
+      await tick();
+      schedule();
+    }, POLL_MS);
+  }
+
+  // ---------------- 动作 ----------------
+
+  async function doStart() {
+    if (S.busy) return;
+    S.busy = true;
+    saveForm();
+    const btn = $("startBtn");
+    const old = btn.textContent;
+    btn.textContent = "启动中…";
+    try {
+      const payload = formValues();
+      await api("/api/start", payload);
+      toast("已启动", "ok");
+    } catch (e) {
+      toast(e.message, "err");
+      showBanner("err", "<b>启动失败：</b>" + escapeHtml(e.message));
+    } finally {
+      S.busy = false;
+      btn.textContent = old;
+      await tick();
+    }
+  }
+
+  async function doStop() {
+    if (S.busy) return;
+    S.busy = true;
+    const btn = $("stopBtn");
+    const old = btn.textContent;
+    btn.textContent = "停止中…";
+    try {
+      await api("/api/stop", {});
+      toast("已停止，网卡配置已还原", "ok");
+    } catch (e) {
+      toast(e.message, "err");
+    } finally {
+      S.busy = false;
+      btn.textContent = old;
+      await tick();
+    }
+  }
+
+  async function doProbe(ip) {
+    const token = openModal("探测 " + ip,
+      '<div class="mrow"><div class="k">状态</div><div class="v">探测中…</div></div>', []);
+    let r;
+    try {
+      r = await api("/api/probe", { ip });
+    } catch (e) {
+      if (token !== modalToken) return;
+      openModal("探测 " + ip, '<div class="mrow"><div class="k">失败</div><div class="v">' +
+        escapeHtml(e.message) + "</div></div>", []);
+      return;
+    }
+    if (token !== modalToken) return;   // 用户已经关掉了，就别再弹回来
+    const rows = [];
+    rows.push(row("结果", r.alive ? "在线" : "无响应"));
+    if (r.mac) rows.push(row("MAC", escapeHtml(r.mac)));
+    if (r.arp_error) rows.push(row("ARP", "⚠ " + escapeHtml(r.arp_error)));
+    if (r.vendor) rows.push(row("厂商", escapeHtml(r.vendor) + (r.confidence ? "（" + escapeHtml(r.confidence) + "）" : "")));
+    if (r.ports && r.ports.length) rows.push(row("端口", escapeHtml(r.ports.join(", "))));
+    if (r.tls_cn) rows.push(row("证书 CN", escapeHtml(r.tls_cn)));
+    if (r.title) rows.push(row("页面标题", escapeHtml(r.title)));
+    if (r.server) rows.push(row("Server", escapeHtml(r.server)));
+    if (r.evidence && r.evidence.length) {
+      rows.push(row("依据", r.evidence.map(escapeHtml).join("<br>")));
+    }
+    if (r.creds && r.creds.length) rows.push(row("常见账号", r.creds.map(escapeHtml).join("<br>")));
+    const buttons = [];
+    const url = safeUrl(r.url);
+    if (url) {
+      buttons.push({ text: "打开管理页", primary: true, onClick: () => window.open(url, "_blank", "noopener") });
+    }
+    openModal("探测 " + ip, rows.join(""), buttons);
+
+    function row(k, v) {
+      return '<div class="mrow"><div class="k">' + escapeHtml(k) +
+        '</div><div class="v">' + v + "</div></div>";
+    }
+  }
+
+  let modalToken = 0;
+
+  function closeModal() {
+    modalToken++;
+    $("overlay").classList.remove("show");
+  }
+
+  function openModal(title, html, buttons) {
+    modalToken++;
+    $("modalTitle").textContent = title;
+    $("modalBody").innerHTML = html;
+    const foot = $("modalFoot");
+    foot.textContent = "";
+    (buttons || []).forEach((b) => {
+      const el = document.createElement("button");
+      el.className = "btn" + (b.primary ? " primary" : "");
+      el.textContent = b.text;
+      el.addEventListener("click", b.onClick);
+      foot.appendChild(el);
+    });
+    const close = document.createElement("button");
+    close.className = "btn";
+    close.textContent = "关闭";
+    close.addEventListener("click", closeModal);
+    foot.appendChild(close);
+    $("overlay").classList.add("show");
+    return modalToken;
+  }
+
+  async function copyText(text) {
+    if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.bmcdDesktop) {
+      window.webkit.messageHandlers.bmcdDesktop.postMessage({ action: "copy", text: String(text) });
+      toast("已复制 " + text);
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(text);
+      toast("已复制 " + text);
+    } catch (e) {
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand("copy"); toast("已复制 " + text); }
+      catch (e2) { toast("复制失败，请手动选中", "err"); }
+      ta.remove();
+    }
+  }
+
+  async function doDiag() {
+    let d;
+    try { d = await api("/api/diag"); }
+    catch (e) { toast(e.message, "err"); return; }
+    const caps = d.capabilities || {};
+    const items = [
+      ["管理员权限", caps.root ? "是" : "否"],
+      [caps.platform === "windows" ? "Npcap 抓包" : "BPF 抓包", caps.bpf ? "可用" : "不可用"],
+      ["scapy", caps.scapy ? "已安装" : "未安装"],
+      ["dnsmasq", caps.dnsmasq ? "已安装" : "未安装"],
+      ["UDP/67", d.port67_free ? "空闲" : ("被占用" + (d.port67_note ? "（" + d.port67_note + "）" : ""))],
+      ["占用者", (d.port67_owners || []).join("，") || "无"],
+      ["引擎", d.engine || "—"],
+      ["状态文件", d.state_path || "—"],
+      ["Python", d.python || "—"],
+    ];
+    // 网卡枚举：Windows 上是三级源，读不到网卡时必须能在这里看到每一级为什么失败
+    const ienum = d.iface_enum || {};
+    if (ienum.sources && ienum.sources.length) {
+      const parts = ienum.sources.map((s) => s.source + "：" + (s.ok
+        ? ("OK " + (s.count || 0) + " 条")
+        : (s.skipped ? "跳过" : "失败")) + " " + (s.ms || 0) + "ms"
+        + (s.error ? "（" + s.error + "）" : ""));
+      items.push(["网卡枚举", parts.join("；")]);
+    } else if (ienum.error) {
+      items.push(["网卡枚举", ienum.error]);
+    } else if (ienum.pending) {
+      items.push(["网卡枚举", "还没枚举过"]);
+    }
+    const html = items.map(([k, v]) =>
+      '<div class="mrow"><div class="k">' + escapeHtml(k) + '</div><div class="v">' +
+      escapeHtml(v) + "</div></div>").join("");
+    openModal("诊断", html, []);
+  }
+
+  function heartbeat() {
+    api("/api/heartbeat", { auto_stop: $("autoStop").checked }).catch(() => {});
+  }
+
+  // ---------------- 事件绑定 ----------------
+
+  function bind() {
+    $("startBtn").addEventListener("click", doStart);
+    $("stopBtn").addEventListener("click", doStop);
+    $("tabLeases").addEventListener("click", () => setTab("leases"));
+    $("tabScan").addEventListener("click", () => setTab("scan"));
+    $("scanStart").addEventListener("click", doScanStart);
+    $("scanStop").addEventListener("click", doScanStop);
+    $("scanCleanup").addEventListener("click", doScanCleanup);
+    ["scanCidrs", "scanListen", "scanGuess", "scanNeighbors",
+     "scanPassive", "scanActive", "scanProbe"].forEach((id) => {
+      const el = $(id);
+      if (el) el.addEventListener("change", saveScanForm);
+    });
+    [["scanPresetLocal", "local"], ["scanPresetWide", "wide"],
+     ["scanPresetFactory", "factory"], ["scanPresetClear", "clear"]].forEach(([id, kind]) => {
+      const el = $(id);
+      if (el) el.addEventListener("click", () => applyPreset(kind));
+    });
+    $("refreshIfaces").addEventListener("click", () => loadIfaces(true, { force: true }));
+    $("showAllIfaces").addEventListener("change", () => { saveForm(); loadIfaces(true); });
+    $("ifaceManual").addEventListener("change", saveForm);
+    $("ifaceManual").addEventListener("input", saveForm);
+    $("quitBtn").addEventListener("click", async () => {
+      if (!confirm("退出会停止 DHCP 服务并还原网卡配置，确定吗？")) return;
+      if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.bmcdDesktop) {
+        window.webkit.messageHandlers.bmcdDesktop.postMessage({ action: "quit" });
+        return;
+      }
+      try { await api("/api/quit", {}); } catch (e) { /* 服务已经走了也没关系 */ }
+      document.body.innerHTML =
+        '<div style="display:flex;height:100vh;align-items:center;justify-content:center;' +
+        'color:#8b949e;font:14px -apple-system,sans-serif">已退出，服务已停止、网卡已还原。可以关闭这个窗口了。</div>';
+    });
+    $("diagBtn").addEventListener("click", doDiag);
+    $("modalClose").addEventListener("click", closeModal);
+    $("overlay").addEventListener("click", (e) => {
+      if (e.target === $("overlay")) closeModal();
+    });
+    $("copyLog").addEventListener("click", () => {
+      const text = Array.from(document.querySelectorAll("#logBox .line"))
+        .map((l) => l.textContent).join("\n");
+      copyText(text || "（日志为空）");
+    });
+    $("clearLog").addEventListener("click", () => {
+      $("logBox").textContent = "";
+      S.logLines = 0;
+    });
+    $("resetBtn").addEventListener("click", () => {
+      try {
+        localStorage.removeItem("bmcd.form");
+        localStorage.removeItem("bmcd.ifaceManual");
+        localStorage.removeItem("bmcd.showAll");
+      } catch (e) { /* ignore */ }
+      location.reload();
+    });
+    FORM_IDS.forEach((id) => {
+      const el = $(id);
+      if (!el) return;
+      el.addEventListener("change", saveForm);
+      if (id === "iface") el.addEventListener("change", () => loadIfaces(true));
+    });
+    $("autoStop").addEventListener("change", () => { saveForm(); heartbeat(); });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") closeModal();
+      if ((e.metaKey || e.ctrlKey) && e.key === "r") { /* 让浏览器自己刷新 */ }
+    });
+  }
+
+  // ---------------- 启动 ----------------
+
+  async function init() {
+    loadForm();
+    loadScanForm();
+    bind();
+    let tab = "leases";
+    try { tab = localStorage.getItem("bmcd.tab") === "scan" ? "scan" : "leases"; } catch (e) { tab = "leases"; }
+    setTab(tab);
+    await loadIfaces(false);
+    await tick();
+    schedule();
+    heartbeat();
+    setInterval(heartbeat, 3000);
+    sysLog("界面已连接");
+  }
+
+  init();
+})();
+</script>
+</body>
+</html>

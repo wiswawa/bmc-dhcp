@@ -1,0 +1,99 @@
+name: Build release candidates
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Version from src/bmcdhcp/__init__.py, without a v prefix
+        required: true
+        type: string
+
+# This workflow creates downloadable Actions artifacts. It does not publish a
+# GitHub Release or push a tag; the maintainer reviews and publishes separately.
+permissions:
+  contents: read
+
+jobs:
+  macos:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-26, macos-15-intel]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    env:
+      EXPECTED_VERSION: ${{ inputs.version }}
+      NO_PROXY: '*'
+      no_proxy: '*'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: '3.13'
+      - name: Verify version input
+        run: |
+          python - <<'PY'
+          import os, runpy
+          actual = runpy.run_path('src/bmcdhcp/__init__.py')['__version__']
+          assert actual == os.environ['EXPECTED_VERSION'], (actual, 'version input mismatch')
+          PY
+      - run: python tools/check_release.py
+      - name: Prepare isolated desktop build environment
+        run: |
+          python -m venv .mac-build-venv
+          .mac-build-venv/bin/python -m pip install -r requirements-macos-build.txt
+      - name: Run nonprivileged regression tests
+        run: PYTHONPATH=src .mac-build-venv/bin/python -m unittest discover -s tests -v
+      - name: Fetch and verify dependency source
+        run: .mac-build-venv/bin/python tools/fetch_release_sources.py
+      - run: ./tools/make_app.sh
+      - run: .mac-build-venv/bin/python tools/verify_macos.py
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: bmc-dhcp-${{ matrix.os }}
+          if-no-files-found: error
+          retention-days: 14
+          path: |
+            dist/BMC-DHCP-*.zip
+            dist/BMC-DHCP-*.zip.sha256
+            dist/bmcdhcp-*-source.tar.gz
+            dist/bmcdhcp-*-source.tar.gz.sha256
+
+  windows:
+    runs-on: windows-2025
+    timeout-minutes: 30
+    env:
+      EXPECTED_VERSION: ${{ inputs.version }}
+      PYTHONUTF8: '1'
+      NO_PROXY: '*'
+      no_proxy: '*'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: '3.13'
+          architecture: x64
+      - name: Verify version input
+        shell: pwsh
+        run: |
+          python -c "import os,runpy; assert runpy.run_path('src/bmcdhcp/__init__.py')['__version__']==os.environ['EXPECTED_VERSION']"
+      - run: python -m pip install -r requirements-windows-build.txt
+      - run: python tools/check_release.py
+      - name: Run Windows launcher and Winsock tests
+        shell: pwsh
+        run: |
+          $env:PYTHONPATH = 'src'
+          python -m unittest discover -s tests -p test_windows_desktop.py -v
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python -m bmcdhcp selftest
+      - run: python tools/fetch_release_sources.py
+      - run: python tools/build_windows.py
+      - run: python tools/verify_windows.py
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: bmc-dhcp-windows-x64
+          if-no-files-found: error
+          retention-days: 14
+          path: |
+            dist/BMC-DHCP-*-Windows-x64.zip
+            dist/BMC-DHCP-*-Windows-x64.zip.sha256

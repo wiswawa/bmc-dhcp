@@ -1,0 +1,20 @@
+include LICENSE THIRD_PARTY_NOTICES.md CHANGELOG.md CONTRIBUTING.md CODE_OF_CONDUCT.md SECURITY.md
+include README.zh-CN.md WIN-README.md requirements-macos-build.txt
+include requirements-windows-build.txt
+include app.py app_win.py bmcd bmcd.cmd BMC*.cmd install.sh
+include .editorconfig .gitattributes .gitignore
+recursive-include src *.py *.html
+recursive-include tests *.py
+recursive-include tools *.py *.sh *.mjs
+recursive-include macos *.swift
+recursive-include windows *.py *.spec
+recursive-include LICENSES *.txt *.md
+recursive-include docs *.md *.png
+recursive-include .github *.yml *.md
+prune docs/eval
+prune docs/validation
+exclude docs/screenshot-error.png docs/screenshot-running.png docs/screenshot-stopped.png
+prune local-notes
+prune build
+prune dist
+global-exclude __pycache__ *.py[cod] .DS_Store *.log *.pcap *.pcapng

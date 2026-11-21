@@ -1,0 +1,85 @@
+#!/usr/bin/env bash
+# bmcd 启动器：自动准备 venv（装 scapy）+ 按需 sudo。
+#
+#   ./bmcd                  等价于 ./bmcd run
+#   ./bmcd --iface en7      直接跑服务
+#   ./bmcd find-static      扫 BMC 出厂静态网段
+#   ./bmcd scan             找「已经配好静态 IP」的机器（被动侦听 + 扫网段）
+#   BMCD_NO_SUDO=1 ./bmcd   不想用 sudo（仅 ifaces/probe/leases/selftest 有意义）
+#   BMCD_CAFFEINATE=1 ./bmcd  跑的时候不让 Mac 睡眠（合盖长任务用）
+
+set -uo pipefail
+
+HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+VENV="${BMCD_VENV:-$HERE/.venv}"
+PYHINT="${BMCD_PYTHON:-}"
+
+pick_python() {
+  local c
+  for c in /opt/homebrew/bin/python3 /usr/local/bin/python3 /usr/bin/python3; do
+    if [ -x "$c" ]; then printf '%s' "$c"; return 0; fi
+  done
+  command -v python3 2>/dev/null || true
+}
+
+if [ -z "$PYHINT" ]; then PYHINT="$(pick_python)"; fi
+if [ -z "$PYHINT" ]; then
+  echo "[bmcd] 找不到 python3。装一个：brew install python@3.12（或在 Xcode CLT 里装）" >&2
+  exit 1
+fi
+
+ensure_venv() {
+  if [ -x "$VENV/bin/python" ]; then return 0; fi
+  echo "[bmcd] 首次运行，初始化运行环境（装 scapy，大约几十秒）…" >&2
+  if ! "$PYHINT" -m venv "$VENV" >/dev/null 2>&1; then
+    echo "[bmcd] venv 创建失败，退回系统 python（无 scapy，将使用 udp 引擎）" >&2
+    VENV=""
+    return 1
+  fi
+  if ! "$VENV/bin/pip" -q install --disable-pip-version-check "scapy>=2.5" >/dev/null 2>&1; then
+    echo "[bmcd] scapy 安装失败，将使用 udp 引擎（--engine udp）" >&2
+  fi
+  return 0
+}
+
+ensure_venv || true
+
+RUNPY="$PYHINT"
+if [ -n "$VENV" ] && [ -x "$VENV/bin/python" ]; then RUNPY="$VENV/bin/python"; fi
+
+# 只要出现 -h/--help/--version，就不要 sudo
+for a in "$@"; do
+  case "$a" in -h|--help|--version) NO_SUDO=1 ;; esac
+done
+NO_SUDO="${NO_SUDO:-0}"
+
+# 取子命令（第一个非选项参数）
+CMD="run"
+for a in "$@"; do
+  case "$a" in
+    -h|--help|--version) CMD="help"; break ;;
+    run|ifaces|probe|find-static|scan|leases|selftest|simulate|web) CMD="$a"; break ;;
+    -*) continue ;;
+    *) break ;;
+  esac
+done
+
+needs_root() {
+  case "$1" in
+    run|find-static|scan|simulate) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
+ARGS=()
+if [ "${BMCD_CAFFEINATE:-0}" = "1" ] && command -v caffeinate >/dev/null 2>&1; then
+  ARGS+=(caffeinate -dims)
+fi
+ARGS+=(env "PYTHONPATH=$HERE/src" "$RUNPY" -m bmcdhcp "$@")
+
+if needs_root "$CMD" && [ "$NO_SUDO" != "1" ] && [ "${EUID:-$(id -u)}" -ne 0 ] && [ "${BMCD_NO_SUDO:-0}" != "1" ]; then
+  echo "[bmcd] 需要 root（绑定 UDP/67 + BPF 抓包），下面请输入登录密码" >&2
+  exec sudo "${ARGS[@]}"
+fi
+
+exec "${ARGS[@]}"

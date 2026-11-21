@@ -1,0 +1,52 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "bmcdhcp"
+dynamic = ["version"]
+description = "Temporary DHCP and BMC discovery for directly connected management interfaces on macOS"
+readme = "README.md"
+requires-python = ">=3.11"
+license = "GPL-2.0-only"
+license-files = ["LICENSE", "THIRD_PARTY_NOTICES.md"]
+authors = [{name = "BMC DHCP contributors"}]
+keywords = ["bmc", "dhcp", "ipmi", "idrac", "ilo", "macos"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: MacOS X",
+    "Intended Audience :: System Administrators",
+    "Operating System :: MacOS :: MacOS X",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: 3.15",
+    "Topic :: System :: Networking",
+]
+dependencies = []
+
+[project.optional-dependencies]
+raw = ["scapy>=2.5"]
+desktop-build = ["pyinstaller>=6.20", "scapy>=2.5", "pillow>=10"]
+dev = ["scapy>=2.5", "pyflakes>=3.2", "build>=1.2", "twine>=6", "PyYAML>=6"]
+
+[project.scripts]
+bmcd = "bmcdhcp.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+bmcdhcp = ["ui/*.html"]
+
+[tool.setuptools.dynamic]
+version = {attr = "bmcdhcp.__version__"}
+
+[project.urls]
+Homepage = "https://github.com/zyf18195378233/bmc-dhcp"
+Repository = "https://github.com/zyf18195378233/bmc-dhcp"
+Issues = "https://github.com/zyf18195378233/bmc-dhcp/issues"
+Releases = "https://github.com/zyf18195378233/bmc-dhcp/releases"

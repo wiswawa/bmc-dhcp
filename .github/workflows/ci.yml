@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: '3.13'
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24'
+      - run: python -m pip install -e '.[dev]'
+      - run: python -m pyflakes src/bmcdhcp tests tools app.py app_win.py
+      - run: python tools/check_release.py
+      - run: node tools/ui_smoke.mjs --quiet
+      - run: bash -n bmcd install.sh tools/make_app.sh
+      - run: python -m build
+      - run: python tools/verify_wheel.py
+
+  macos-tests:
+    runs-on: macos-26
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ['3.11', '3.13', '3.15']
+    env:
+      NO_PROXY: '*'
+      no_proxy: '*'
+      BMCD_HOME: ${{ runner.temp }}/bmcd-test-home
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: ${{ matrix.python }}
+      - run: python -m pip install -e '.[dev]'
+      - run: python -m unittest discover -s tests -v
+      - run: python -m bmcdhcp selftest

@@ -1,0 +1,43 @@
+name: Bug report / 问题报告
+description: Report a reproducible problem. Use SECURITY.md for vulnerabilities.
+title: "[Bug] "
+body:
+  - type: markdown
+    attributes:
+      value: Remove session tokens, personal paths, real MACs and customer hostnames. Hardware tests and simulations must be distinguished.
+  - type: input
+    id: version
+    attributes:
+      label: Application version / 应用版本
+      placeholder: "1.9.0, Mac app or source CLI"
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment / 环境
+      placeholder: "macOS version, arm64/x86_64, Ethernet adapter model"
+    validations:
+      required: true
+  - type: textarea
+    id: topology
+    attributes:
+      label: Topology and BMC / 接线和 BMC
+      description: Direct cable or isolated switch, BMC model/firmware, DHCP/static setting. Do not include passwords.
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Reproduction steps / 复现步骤
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected and actual behavior / 预期和实际结果
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Sanitized logs / 脱敏日志
+      render: text
