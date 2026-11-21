@@ -1,1 +1,8 @@
 blank_issues_enabled: false
+contact_links:
+  - name: Questions, setup help and compatibility reports
+    url: https://github.com/wiswawa/bmc-dhcp/discussions
+    about: Ask for help without filing a bug, or share a hardware compatibility report.
+  - name: Report a security vulnerability
+    url: https://github.com/wiswawa/bmc-dhcp/security/advisories/new
+    about: Report vulnerabilities privately. Do not include live tokens or customer data.

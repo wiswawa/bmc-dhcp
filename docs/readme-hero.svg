@@ -1,0 +1,103 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 720" role="img" aria-labelledby="title desc">
+  <title id="title">BMC DHCP</title>
+  <desc id="desc">Temporary DHCP and management discovery for server BMC interfaces on macOS and Windows.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#07111f"/>
+      <stop offset="0.55" stop-color="#0a1c31"/>
+      <stop offset="1" stop-color="#102b45"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#3b82f6"/>
+      <stop offset="0.55" stop-color="#22d3ee"/>
+      <stop offset="1" stop-color="#34d399"/>
+    </linearGradient>
+    <linearGradient id="card" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.12"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0.035"/>
+    </linearGradient>
+    <filter id="glow" x="-80%" y="-80%" width="260%" height="260%">
+      <feGaussianBlur stdDeviation="22"/>
+    </filter>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="180%">
+      <feDropShadow dx="0" dy="24" stdDeviation="28" flood-color="#020617" flood-opacity="0.5"/>
+    </filter>
+    <pattern id="grid" width="44" height="44" patternUnits="userSpaceOnUse">
+      <path d="M 44 0 L 0 0 0 44" fill="none" stroke="#7dd3fc" stroke-opacity="0.055" stroke-width="1"/>
+    </pattern>
+  </defs>
+
+  <rect width="1600" height="720" rx="36" fill="url(#bg)"/>
+  <rect width="1600" height="720" rx="36" fill="url(#grid)"/>
+  <circle cx="1420" cy="90" r="210" fill="#0ea5e9" fill-opacity="0.14" filter="url(#glow)"/>
+  <circle cx="1120" cy="650" r="250" fill="#10b981" fill-opacity="0.1" filter="url(#glow)"/>
+  <path d="M0 640 C300 500 540 760 820 610 S1260 470 1600 590" fill="none" stroke="url(#accent)" stroke-opacity="0.18" stroke-width="2"/>
+
+  <g font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif">
+    <g transform="translate(90 74)">
+      <rect width="326" height="46" rx="23" fill="#0f172a" stroke="#38bdf8" stroke-opacity="0.35"/>
+      <circle cx="24" cy="23" r="6" fill="#34d399"/>
+      <text x="43" y="29" fill="#cbd5e1" font-size="17" font-weight="700" letter-spacing="1.4">SERVER MANAGEMENT NETWORK</text>
+    </g>
+
+    <text x="90" y="242" fill="#f8fafc" font-size="94" font-weight="800" letter-spacing="-3.5">BMC DHCP</text>
+    <text x="92" y="307" fill="#dbeafe" font-size="30" font-weight="600">From one cable to the management page.</text>
+    <text x="92" y="349" fill="#93c5fd" font-size="23">Temporary DHCP, live leases and BMC discovery for macOS and Windows.</text>
+
+    <g transform="translate(92 405)">
+      <rect width="172" height="44" rx="14" fill="#ffffff" fill-opacity="0.07" stroke="#ffffff" stroke-opacity="0.13"/>
+      <text x="22" y="29" fill="#e2e8f0" font-size="18" font-weight="650">macOS 15+</text>
+    </g>
+    <g transform="translate(278 405)">
+      <rect width="194" height="44" rx="14" fill="#ffffff" fill-opacity="0.07" stroke="#ffffff" stroke-opacity="0.13"/>
+      <text x="22" y="29" fill="#e2e8f0" font-size="18" font-weight="650">Windows x64</text>
+    </g>
+    <g transform="translate(486 405)">
+      <rect width="214" height="44" rx="14" fill="#ffffff" fill-opacity="0.07" stroke="#ffffff" stroke-opacity="0.13"/>
+      <text x="22" y="29" fill="#e2e8f0" font-size="18" font-weight="650">Self-contained</text>
+    </g>
+
+    <g transform="translate(92 512)">
+      <rect width="520" height="105" rx="22" fill="#020617" fill-opacity="0.48" stroke="#38bdf8" stroke-opacity="0.22"/>
+      <text x="26" y="35" fill="#7dd3fc" font-size="15" font-weight="800" letter-spacing="1.8">DHCP HANDSHAKE</text>
+      <text x="26" y="73" fill="#f8fafc" font-size="24" font-weight="750">DISCOVER  →  OFFER  →  REQUEST  →  ACK</text>
+    </g>
+
+    <g filter="url(#shadow)">
+      <rect x="902" y="118" width="584" height="492" rx="30" fill="url(#card)" stroke="#cbd5e1" stroke-opacity="0.18"/>
+      <rect x="932" y="146" width="524" height="48" rx="16" fill="#020617" fill-opacity="0.48"/>
+      <circle cx="961" cy="170" r="7" fill="#f87171"/>
+      <circle cx="985" cy="170" r="7" fill="#fbbf24"/>
+      <circle cx="1009" cy="170" r="7" fill="#34d399"/>
+      <text x="1052" y="177" fill="#94a3b8" font-size="16" font-weight="650">BMC DHCP · isolated management link</text>
+
+      <rect x="960" y="236" width="204" height="128" rx="22" fill="#0f172a" stroke="#38bdf8" stroke-opacity="0.4"/>
+      <text x="985" y="272" fill="#7dd3fc" font-size="14" font-weight="800" letter-spacing="1.5">WORKSTATION</text>
+      <text x="985" y="315" fill="#f8fafc" font-size="26" font-weight="750">Mac / PC</text>
+      <text x="985" y="342" fill="#94a3b8" font-size="16">10.99.0.1 / 24</text>
+
+      <path d="M1164 300H1295" fill="none" stroke="url(#accent)" stroke-width="4" stroke-linecap="round"/>
+      <path d="M1281 289L1295 300L1281 311" fill="none" stroke="#34d399" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+      <rect x="1166" y="260" width="126" height="28" rx="14" fill="#052e2b" stroke="#34d399" stroke-opacity="0.5"/>
+      <text x="1182" y="279" fill="#6ee7b7" font-size="14" font-weight="800">DHCP ACTIVE</text>
+
+      <rect x="1297" y="218" width="162" height="164" rx="24" fill="#10243d" stroke="#22d3ee" stroke-opacity="0.35"/>
+      <text x="1322" y="255" fill="#67e8f9" font-size="14" font-weight="800" letter-spacing="1.5">BMC</text>
+      <text x="1322" y="301" fill="#f8fafc" font-size="22" font-weight="750">iDRAC</text>
+      <text x="1322" y="330" fill="#f8fafc" font-size="22" font-weight="750">iLO / XCC</text>
+      <text x="1322" y="359" fill="#f8fafc" font-size="22" font-weight="750">iBMC</text>
+
+      <g transform="translate(960 415)">
+        <rect width="476" height="150" rx="22" fill="#020617" fill-opacity="0.54" stroke="#94a3b8" stroke-opacity="0.16"/>
+        <text x="24" y="34" fill="#94a3b8" font-size="14" font-weight="800" letter-spacing="1.5">LIVE LEASES</text>
+        <circle cx="30" cy="76" r="8" fill="#34d399"/>
+        <text x="51" y="82" fill="#f8fafc" font-size="18" font-weight="700">10.99.0.100</text>
+        <text x="235" y="82" fill="#93c5fd" font-size="16">192.168.1.24</text>
+        <text x="402" y="82" fill="#cbd5e1" font-size="15">300 s</text>
+        <path d="M24 104H452" stroke="#94a3b8" stroke-opacity="0.16"/>
+        <text x="24" y="132" fill="#94a3b8" font-size="15">BMC identified · management URL ready</text>
+        <circle cx="442" cy="127" r="7" fill="#22d3ee"/>
+      </g>
+    </g>
+  </g>
+</svg>

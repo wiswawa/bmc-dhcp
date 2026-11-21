@@ -9,7 +9,7 @@ recursive-include tools *.py *.sh *.mjs
 recursive-include macos *.swift
 recursive-include windows *.py *.spec
 recursive-include LICENSES *.txt *.md
-recursive-include docs *.md *.png
+recursive-include docs *.md *.png *.svg
 recursive-include .github *.yml *.md
 prune docs/eval
 prune docs/validation

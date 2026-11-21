@@ -4,7 +4,7 @@
 
 ## 下载安装包
 
-[GitHub Releases](https://github.com/zyf18195378233/bmc-dhcp/releases)
+[GitHub Releases](https://github.com/wiswawa/bmc-dhcp/releases)
 
 下载 `BMC-DHCP-<version>-Windows-x64.zip`，完整解压后：
 

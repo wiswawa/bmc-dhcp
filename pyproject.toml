@@ -47,7 +47,7 @@ bmcdhcp = ["ui/*.html"]
 version = {attr = "bmcdhcp.__version__"}
 
 [project.urls]
-Homepage = "https://github.com/zyf18195378233/bmc-dhcp"
-Repository = "https://github.com/zyf18195378233/bmc-dhcp"
-Issues = "https://github.com/zyf18195378233/bmc-dhcp/issues"
-Releases = "https://github.com/zyf18195378233/bmc-dhcp/releases"
+Homepage = "https://github.com/wiswawa/bmc-dhcp"
+Repository = "https://github.com/wiswawa/bmc-dhcp"
+Issues = "https://github.com/wiswawa/bmc-dhcp/issues"
+Releases = "https://github.com/wiswawa/bmc-dhcp/releases"

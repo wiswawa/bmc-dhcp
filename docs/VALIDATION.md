@@ -7,7 +7,7 @@
 | 检查 | 结果 | 方式 |
 | --- | --- | --- |
 | Python 3.13.3 本地回归 | 430 项通过，1 项跳过 | 跳过项只接受真实 Windows Winsock；其余物理网口操作由 mock 隔离 |
-| Python 3.11 / 3.13 / 3.15 在线回归 | 全部通过 | GitHub Actions `macos-tests` 矩阵，运行 [44864338173](https://github.com/zyf18195378233/bmc-dhcp/actions/runs/44864338173) |
+| Python 3.11 / 3.13 / 3.15 在线回归 | 全部通过 | GitHub Actions `macos-tests` 矩阵，运行 [44865823351](https://github.com/wiswawa/bmc-dhcp/actions/runs/44865823351) |
 | 在线质量检查 | 通过 | pyflakes、公开内容审计、UI 冒烟、shell 语法、wheel 构建与源码目录外安装 |
 | 前端函数冒烟 | 35/35 通过 | 超时、重试、空网口与错误呈现 |
 | 静态与语法检查 | pyflakes、Bash、YAML 通过 | GitHub 工作流及问题表单可解析，动作引用为完整 SHA |
@@ -23,7 +23,7 @@
 | 原生窗口 | 通过 | 默认设置、诊断、静态 IP 页面与退出确认；新截图来自本次实际应用 |
 | 原生退出清理 | 通过 | 测试窗口和后台进程退出，会话文件删除 |
 | Windows x64 便携包 | 通过 | Windows 2025 runner 上实际运行 GUI 包校验、CLI 自检、迁移路径、环回 API 与退出 |
-| 三平台候选包 | 全部通过 | [运行 44865226457](https://github.com/zyf18195378233/bmc-dhcp/actions/runs/44865226457) 中 arm64、Intel、Windows x64 三个作业均为 success |
+| 三平台候选包 | 全部通过 | [运行 44865830860](https://github.com/wiswawa/bmc-dhcp/actions/runs/44865830860) 中 arm64、Intel、Windows x64 三个作业均为 success |
 | 发布包内容审计 | 通过 | 解压并检查文件名、签名、许可证、对应源码、系统 DLL 排除、无内部记录/日志/令牌/个人路径；SHA-256 sidecar 可跨平台校验 |
 
 Native QA 使用 `--no-elevate`、独立后台数据目录和临时 WebKit 存储，不读取/覆盖用户真实保存的表单。截图显示普通权限、空租约，不代表真实 BMC 分配成功。

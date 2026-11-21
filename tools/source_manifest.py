@@ -9,7 +9,8 @@ FILES = (
     "THIRD_PARTY_NOTICES.md", "MANIFEST.in", "pyproject.toml", "requirements-macos-build.txt",
     "app.py", "app_win.py", "bmcd", "bmcd.cmd", "BMC DHCP.cmd", "install.sh", "requirements-windows-build.txt",
     "docs/QUICKSTART.md", "docs/ARCHITECTURE.md", "docs/CLI_REFERENCE.zh-CN.md",
-    "docs/RELEASING.md", "docs/VALIDATION.md", "docs/screenshot-macos.png",
+    "docs/RELEASING.md", "docs/VALIDATION.md", "docs/readme-hero.svg",
+    "docs/screenshot-macos.png", "docs/social-preview.png",
 )
 DIRECTORIES = ("src", "tests", "tools", "macos", "windows", ".github", "LICENSES")
 SKIP_PARTS = {"__pycache__", ".git", "eval", "validation", "local-notes"}
