@@ -27,6 +27,9 @@ iface-backup.json
 web.json
 docs/eval/
 docs/validation/
+docs/OPEN_SOURCE_READY.md
+docs/PROJECT.md
+tools/prepare_git.py
 docs/screenshot-error.png
 docs/screenshot-running.png
 docs/screenshot-stopped.png

@@ -14,6 +14,8 @@ recursive-include .github *.yml *.md
 prune docs/eval
 prune docs/validation
 exclude docs/screenshot-error.png docs/screenshot-running.png docs/screenshot-stopped.png
+exclude docs/OPEN_SOURCE_READY.md docs/PROJECT.md
+exclude tools/prepare_git.py
 prune local-notes
 prune build
 prune dist

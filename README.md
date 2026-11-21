@@ -27,7 +27,7 @@ This is a **beta**. Automated protocol, loopback, packaging and native-window ch
 
 ## Use the Mac app
 
-Requires macOS 13+. Use the ZIP matching your Mac architecture when a release is available. Current local validation covers Apple Silicon; Intel release builds are configured but not yet run.
+The current binary release requires macOS 15+ (the bundled Python runtime sets the minimum). Use the ZIP matching your Mac architecture when a release is available. Current local validation covers Apple Silicon; Intel release builds are configured but not yet run.
 
 1. Connect your Ethernet adapter to the dedicated BMC port or an isolated management switch. The BMC must have DHCP enabled.
 2. Open **BMC DHCP.app** and complete macOS administrator authorization.
@@ -57,7 +57,6 @@ See [CLI and discovery reference](docs/CLI_REFERENCE.zh-CN.md) for pools, static
 
 - [Contributing and tests](CONTRIBUTING.md)
 - [Release builds, source archives and signing](docs/RELEASING.md)
-- [GitHub launch preparation](docs/OPEN_SOURCE_READY.md)
 - [Changes](CHANGELOG.md) · [Security policy](SECURITY.md) · [Community conduct](CODE_OF_CONDUCT.md)
 
 CI configurations cover lint, UI smoke checks, wheel installation, macOS tests and manually requested desktop build candidates. They do not constitute a successful GitHub-hosted run until executed in the repository. Release workflows upload reviewable Actions artifacts and do not automatically publish a GitHub Release.

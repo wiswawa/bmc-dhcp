@@ -13,6 +13,7 @@ import runpy
 import shutil
 import subprocess
 import sys
+import sysconfig
 
 from bundle_licenses import collect_licenses
 from check_release import check
@@ -52,6 +53,11 @@ def main() -> int:
         __import__(dependency)
     version = runpy.run_path(str(ROOT / "src/bmcdhcp/__init__.py"))["__version__"]
     arch = platform.machine()
+    deployment = str(sysconfig.get_config_var("MACOSX_DEPLOYMENT_TARGET") or "13.0")
+    if "." not in deployment:
+        deployment += ".0"
+    if tuple(int(part) for part in deployment.split(".")[:2]) < (13, 0):
+        deployment = "13.0"
     BUILD.mkdir(parents=True, exist_ok=True)
     backend = BUILD / "frozen" / "bmcd-runtime"
     source_id = backend_source_id()
@@ -92,7 +98,7 @@ def main() -> int:
     shutil.copy2(icon, resources / "AppIcon.icns")
     docs = resources / "Docs"
     docs.mkdir()
-    for name in ("PROJECT.md", "QUICKSTART.md", "VALIDATION.md"):
+    for name in ("QUICKSTART.md", "VALIDATION.md"):
         source = ROOT / "docs" / name
         if source.exists():
             shutil.copy2(source, docs / name)
@@ -109,7 +115,7 @@ def main() -> int:
         "CFBundleIdentifier": "local.bmcdhcp.app", "CFBundleExecutable": "BMCDHCP",
         "CFBundleIconFile": "AppIcon", "CFBundlePackageType": "APPL",
         "CFBundleShortVersionString": version, "CFBundleVersion": version,
-        "CFBundleInfoDictionaryVersion": "6.0", "LSMinimumSystemVersion": "13.0",
+        "CFBundleInfoDictionaryVersion": "6.0", "LSMinimumSystemVersion": deployment,
         "NSHighResolutionCapable": True,
         "LSApplicationCategoryType": "public.app-category.utilities",
         "NSLocalNetworkUsageDescription": "在所选以太网口为直连 BMC 提供临时 DHCP 并识别管理页面。",
@@ -119,7 +125,7 @@ def main() -> int:
     with (contents / "Info.plist").open("wb") as fh:
         plistlib.dump(info, fh, sort_keys=False)
     (contents / "PkgInfo").write_bytes(b"APPL????")
-    run("/usr/bin/swiftc", "-O", "-parse-as-library", "-swift-version", "5", "-target", f"{arch}-apple-macosx13.0",
+    run("/usr/bin/swiftc", "-O", "-parse-as-library", "-swift-version", "5", "-target", f"{arch}-apple-macosx{deployment}",
         "-framework", "AppKit", "-framework", "WebKit", ROOT / "macos/Desktop.swift",
         "-o", contents / "MacOS/BMCDHCP")
     run("/usr/bin/codesign", "--force", "--deep", "--sign", "-", staging)

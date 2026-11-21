@@ -21,7 +21,7 @@
 
 ## 使用
 
-需要 macOS 13+，下载与 Mac 架构匹配的 ZIP 后解压。目前本地验证覆盖 Apple Silicon；Intel 构建流程已配置，尚未在线运行。
+当前二进制版本需要 macOS 15+（由随包 Python 的构建目标决定），下载与 Mac 架构匹配的 ZIP 后解压。目前本地验证覆盖 Apple Silicon；Intel 构建流程已配置，尚未在线运行。
 
 1. 用网线连接 Mac 网卡与 BMC 专用管理口，或接入隔离管理交换机。确认 BMC 已启用 DHCP。
 2. 打开 **BMC DHCP.app**，通过 macOS 管理员授权。
@@ -51,7 +51,6 @@ python3 -m venv .venv
 
 - [参与贡献](CONTRIBUTING.md)：开发环境、测试与提交要求。
 - [发布指南](docs/RELEASING.md)：构建、许可证、对应源码、签名与校验。
-- [GitHub 开源准备](docs/OPEN_SOURCE_READY.md)：已完成事项与发布前剩余步骤。
 - [更新记录](CHANGELOG.md) · [安全政策](SECURITY.md) · [社区规范](CODE_OF_CONDUCT.md)。
 
 已配置 GitHub CI 和手动构建候选包的工作流；只有推到仓库并实际执行后，才能认为 GitHub 在线检查通过。工作流只上传可审阅的 Actions 构建产物，不会自动公开发布 Release。

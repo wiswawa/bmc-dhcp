@@ -2,7 +2,7 @@
 
 ## Prepare an isolated build
 
-Use macOS, Python 3.11+ and Xcode Command Line Tools. Python 3.13 is the validated desktop build interpreter. Build on each target architecture separately; an arm64 build does not validate Intel operation.
+Use macOS, Python 3.11+ and Xcode Command Line Tools. Python 3.13 is the validated desktop build interpreter. The app minimum OS follows the bundled interpreter deployment target (currently macOS 15+), rather than advertising a lower unsupported runtime floor. Build on each target architecture separately; an arm64 build does not validate Intel operation.
 
 ```bash
 python3 -m venv .mac-build-venv
@@ -44,7 +44,7 @@ The wheel verifier installs outside the checkout without runtime dependencies an
 
 ## GitHub Actions
 
-`ci.yml` runs on pushes to `main` and pull requests. `release.yml` is manual: enter the exact version without `v`. It builds separate arm64 and Intel candidates and uploads Actions artifacts with a 14-day retention period. It has read-only repository permissions and does **not** publish a Release or push a tag.
+`ci.yml` runs on pushes to `main` and pull requests. `release.yml` is manual: enter the exact version without `v`. It builds separate arm64/Intel macOS candidates and a self-contained Windows x64 GUI/CLI package and uploads Actions artifacts with a 14-day retention period. It has read-only repository permissions and does **not** publish a Release or push a tag.
 
 Review successful hosted checks and downloaded artifacts before creating a GitHub Release. Attach the Mac ZIP/checksum and corresponding source/checksum, and clearly state any unverified hardware/platform boundary. Preparing these workflows locally does not mean they have run successfully on GitHub.
 

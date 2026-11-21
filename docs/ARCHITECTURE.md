@@ -45,6 +45,6 @@ Recovery is conditional on macOS accepting the relevant commands. It cannot guar
 
 Nonprivileged native QA uses a nonpersistent WebKit data store, separate from the user’s saved form settings. The launcher/CLI selects the lease output path; control API requests cannot redirect that output.
 
-The source allowlist is shared by release checks, source archive generation and Git preparation. Personal evaluation logs, virtual environments, `.app` bundles, packet captures and state files are excluded from the public source.
+The source allowlist is shared by release checks, source archive generation. Personal evaluation logs, virtual environments, `.app` bundles, packet captures and state files are excluded from the public source.
 
 Mac builds use a separate pinned build environment. They include license files, verified Scapy source, the matching project source and dependency inventory. Signing remains ad-hoc until a maintainer supplies a proper Developer ID signing/notarization process.
