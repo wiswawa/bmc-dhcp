@@ -21,7 +21,7 @@ PATTERNS = {
     "private key": re.compile(r"-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----"),
 }
 REQUIRED = (
-    "LICENSE", "README.md", "README.zh-CN.md", "THIRD_PARTY_NOTICES.md", "CONTRIBUTING.md",
+    "LICENSE", "README.en.md", "README.md", "THIRD_PARTY_NOTICES.md", "CONTRIBUTING.md",
     "CODE_OF_CONDUCT.md", "SECURITY.md", "CHANGELOG.md", ".github/workflows/ci.yml",
     ".github/workflows/release.yml", "docs/RELEASING.md", "docs/VALIDATION.md",
 )

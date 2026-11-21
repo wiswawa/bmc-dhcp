@@ -4,7 +4,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 FILES = (
-    ".editorconfig", ".gitattributes", ".gitignore", "LICENSE", "README.md", "README.zh-CN.md",
+    ".editorconfig", ".gitattributes", ".gitignore", "LICENSE", "README.en.md", "README.md",
     "WIN-README.md", "CHANGELOG.md", "CONTRIBUTING.md", "CODE_OF_CONDUCT.md", "SECURITY.md",
     "THIRD_PARTY_NOTICES.md", "MANIFEST.in", "pyproject.toml", "requirements-macos-build.txt",
     "app.py", "app_win.py", "bmcd", "bmcd.cmd", "BMC DHCP.cmd", "install.sh", "requirements-windows-build.txt",

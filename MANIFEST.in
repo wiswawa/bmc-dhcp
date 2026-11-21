@@ -1,5 +1,5 @@
 include LICENSE THIRD_PARTY_NOTICES.md CHANGELOG.md CONTRIBUTING.md CODE_OF_CONDUCT.md SECURITY.md
-include README.zh-CN.md WIN-README.md requirements-macos-build.txt
+include README.en.md WIN-README.md requirements-macos-build.txt
 include requirements-windows-build.txt
 include app.py app_win.py bmcd bmcd.cmd BMC*.cmd install.sh
 include .editorconfig .gitattributes .gitignore
