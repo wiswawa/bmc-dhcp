@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "bmcdhcp"
 dynamic = ["version"]
-description = "Temporary DHCP and BMC discovery for directly connected management interfaces on macOS"
+description = "Temporary DHCP and BMC discovery for directly connected management interfaces on macOS and Windows"
 readme = "README.md"
 requires-python = ">=3.11"
 license = "GPL-2.0-only"

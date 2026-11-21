@@ -8,6 +8,18 @@
 
 ![原生控制台：普通权限测试，未连接 BMC](docs/screenshot-macos.png)
 
+## 下载与系统要求
+
+从 [GitHub Releases](https://github.com/zyf18195378233/bmc-dhcp/releases) 下载并完整解压，不要只复制应用入口。
+
+| 平台 | 包名 | 入口 |
+| --- | --- | --- |
+| macOS 15+ / Apple Silicon | `BMC-DHCP-<版本>-macOS-arm64.zip` | `BMC DHCP.app` |
+| macOS 15+ / Intel | `BMC-DHCP-<版本>-macOS-x86_64.zip` | `BMC DHCP.app` |
+| Windows 10/11 / x64 | `BMC-DHCP-<版本>-Windows-x64.zip` | `BMC DHCP.exe` / `bmcd.exe` |
+
+二进制包自带 Python、Scapy；Windows 二层抓包所需 Npcap 另行安装。签名、实际验证的平台和物理硬件限制见 [验证记录](docs/VALIDATION.md)。
+
 ## 主要能力
 
 - 原生 macOS 窗口，随包携带 Python 和 scapy，不要求安装 Homebrew、Python 或 Chrome。

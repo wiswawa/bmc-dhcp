@@ -14,6 +14,18 @@ Mac + Ethernet adapter        isolated cable/switch          BMC
 
 ![Native macOS console, nonprivileged test mode](docs/screenshot-macos.png)
 
+## Downloads and requirements
+
+Use the assets on [GitHub Releases](https://github.com/zyf18195378233/bmc-dhcp/releases). Extract the complete ZIP, including its runtime folders.
+
+| Platform | Package | Entry point |
+| --- | --- | --- |
+| macOS 15+ / Apple Silicon | `BMC-DHCP-<version>-macOS-arm64.zip` | `BMC DHCP.app` |
+| macOS 15+ / Intel | `BMC-DHCP-<version>-macOS-x86_64.zip` | `BMC DHCP.app` |
+| Windows 10/11 / x64 | `BMC-DHCP-<version>-Windows-x64.zip` | `BMC DHCP.exe` / `bmcd.exe` |
+
+Binary packages include Python and Scapy. Npcap is a separate optional Windows driver for raw Ethernet features. Signing, tested platforms and physical-hardware limits are recorded in [Validation](docs/VALIDATION.md); a CI build does not validate every BMC model.
+
 ## What it does
 
 - Native AppKit/WKWebView window with a bundled Python runtime; no Homebrew, Chrome or Python installation needed for the Mac app.

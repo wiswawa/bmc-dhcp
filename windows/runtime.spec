@@ -17,6 +17,8 @@ console = Analysis([str(root / "windows/cli_entry.py")], **settings)
 system_root = Path(os.environ["SystemRoot"]).resolve()
 def application_binary(entry):
     name, original, kind = entry
+    if Path(name).name.lower() == "ucrtbase.dll":
+        return False
     if Path(name).name.lower().startswith(("api-ms-win-", "ext-ms-win-")):
         return False
     return not Path(original).resolve().is_relative_to(system_root)
