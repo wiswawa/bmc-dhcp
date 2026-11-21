@@ -12,13 +12,24 @@ import unittest
 TOOLS = Path(__file__).resolve().parents[1] / "tools"
 sys.path.insert(0, str(TOOLS))
 
-from check_release import privacy_findings  # noqa: E402
+from check_release import privacy_findings, workflow_env_findings  # noqa: E402
 from source_bundle import build_source  # noqa: E402
 from source_manifest import public_files  # noqa: E402
 from bmcdhcp import __version__, cli  # noqa: E402
 
 
 class PublicSourceTest(unittest.TestCase):
+    def test_workflow_env_keys_are_case_insensitive(self):
+        errors = workflow_env_findings("    env:\n      NO_PROXY: '*'\n      no_proxy: '*'\n")
+        self.assertTrue(any("duplicate" in item for item in errors))
+
+    def test_runner_context_is_rejected_at_job_level(self):
+        errors = workflow_env_findings("    env:\n      BMCD_HOME: ${{ runner.temp }}/test\n")
+        self.assertTrue(any("runner context" in item for item in errors))
+
+    def test_runner_context_is_allowed_at_step_level(self):
+        self.assertEqual(workflow_env_findings("        env:\n          BMCD_HOME: ${{ runner.temp }}/test\n"), [])
+
     def test_privacy_guard_reports_category_without_printing_credential(self):
         with tempfile.TemporaryDirectory() as temp:
             path = Path(temp) / "notes.md"

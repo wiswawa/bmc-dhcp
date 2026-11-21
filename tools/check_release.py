@@ -27,6 +27,33 @@ REQUIRED = (
 )
 
 
+def workflow_env_findings(text: str) -> list[str]:
+    """Catch GitHub's case-insensitive env keys and job-context restrictions."""
+    errors = []
+    env_indent = None
+    names = set()
+    for number, line in enumerate(text.splitlines(), 1):
+        if not line.strip() or line.lstrip().startswith("#"):
+            continue
+        indent = len(line) - len(line.lstrip())
+        if re.fullmatch(r"\s*env:\s*", line):
+            env_indent, names = indent, set()
+            continue
+        if env_indent is not None:
+            if indent <= env_indent:
+                env_indent = None
+                continue
+            match = re.match(r"\s*([A-Za-z_][A-Za-z_0-9]*):\s*(.*)", line)
+            if match and indent == env_indent + 2:
+                name, value = match.groups()
+                if name.casefold() in names:
+                    errors.append(f"line {number}: duplicate environment name ignoring case: {name}")
+                names.add(name.casefold())
+                if env_indent <= 4 and "runner." in value and "${{" in value:
+                    errors.append(f"line {number}: runner context belongs in a step, not job-level env")
+    return errors
+
+
 def privacy_findings(path: Path) -> list[str]:
     try:
         text = path.read_text(encoding="utf-8")
@@ -63,6 +90,7 @@ def check(root: Path = ROOT) -> list[str]:
         errors.append("Package metadata must use the single source of version truth")
     for path in (root / ".github/workflows").glob("*.yml"):
         text = path.read_text()
+        errors.extend(f"{path.name}: {error}" for error in workflow_env_findings(text))
         if "pull_request_target" in text:
             errors.append(f"{path.name}: privileged pull_request_target trigger is not allowed")
         for action in re.findall(r"uses:\s*([^\s#]+)", text):
