@@ -1,103 +1,103 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 720" role="img" aria-labelledby="title desc">
-  <title id="title">BMC DHCP</title>
-  <desc id="desc">Temporary DHCP and management discovery for server BMC interfaces on macOS and Windows.</desc>
+  <title id="title">BMC DHCP：服务器 BMC 临时 DHCP 与发现工具</title>
+  <desc id="desc">在 macOS 和 Windows 上将网卡接入服务器 BMC 管理口，完成临时 DHCP、设备识别并打开管理页面。</desc>
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#07111f"/>
-      <stop offset="0.55" stop-color="#0a1c31"/>
-      <stop offset="1" stop-color="#102b45"/>
+      <stop offset="0" stop-color="#f7fbff"/>
+      <stop offset="0.58" stop-color="#eef6ff"/>
+      <stop offset="1" stop-color="#e8f2ff"/>
     </linearGradient>
     <linearGradient id="accent" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#3b82f6"/>
-      <stop offset="0.55" stop-color="#22d3ee"/>
-      <stop offset="1" stop-color="#34d399"/>
+      <stop offset="0" stop-color="#2563eb"/>
+      <stop offset="0.55" stop-color="#0891b2"/>
+      <stop offset="1" stop-color="#059669"/>
     </linearGradient>
-    <linearGradient id="card" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#ffffff" stop-opacity="0.12"/>
-      <stop offset="1" stop-color="#ffffff" stop-opacity="0.035"/>
+    <linearGradient id="panel" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0c1c30"/>
+      <stop offset="1" stop-color="#102b45"/>
     </linearGradient>
-    <filter id="glow" x="-80%" y="-80%" width="260%" height="260%">
-      <feGaussianBlur stdDeviation="22"/>
+    <filter id="shadow" x="-25%" y="-25%" width="150%" height="170%">
+      <feDropShadow dx="0" dy="24" stdDeviation="28" flood-color="#17345b" flood-opacity="0.2"/>
     </filter>
-    <filter id="shadow" x="-30%" y="-30%" width="160%" height="180%">
-      <feDropShadow dx="0" dy="24" stdDeviation="28" flood-color="#020617" flood-opacity="0.5"/>
-    </filter>
-    <pattern id="grid" width="44" height="44" patternUnits="userSpaceOnUse">
-      <path d="M 44 0 L 0 0 0 44" fill="none" stroke="#7dd3fc" stroke-opacity="0.055" stroke-width="1"/>
+    <pattern id="dots" width="28" height="28" patternUnits="userSpaceOnUse">
+      <circle cx="2" cy="2" r="1.25" fill="#2563eb" fill-opacity="0.11"/>
     </pattern>
   </defs>
 
-  <rect width="1600" height="720" rx="36" fill="url(#bg)"/>
-  <rect width="1600" height="720" rx="36" fill="url(#grid)"/>
-  <circle cx="1420" cy="90" r="210" fill="#0ea5e9" fill-opacity="0.14" filter="url(#glow)"/>
-  <circle cx="1120" cy="650" r="250" fill="#10b981" fill-opacity="0.1" filter="url(#glow)"/>
-  <path d="M0 640 C300 500 540 760 820 610 S1260 470 1600 590" fill="none" stroke="url(#accent)" stroke-opacity="0.18" stroke-width="2"/>
+  <rect width="1600" height="720" rx="34" fill="url(#bg)"/>
+  <rect width="1600" height="720" rx="34" fill="url(#dots)"/>
+  <circle cx="1450" cy="110" r="250" fill="#60a5fa" fill-opacity="0.13"/>
+  <circle cx="880" cy="720" r="250" fill="#34d399" fill-opacity="0.09"/>
+  <path d="M0 610C280 500 520 750 820 610S1270 460 1600 580" fill="none" stroke="url(#accent)" stroke-opacity="0.17" stroke-width="2"/>
 
-  <g font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif">
-    <g transform="translate(90 74)">
-      <rect width="326" height="46" rx="23" fill="#0f172a" stroke="#38bdf8" stroke-opacity="0.35"/>
-      <circle cx="24" cy="23" r="6" fill="#34d399"/>
-      <text x="43" y="29" fill="#cbd5e1" font-size="17" font-weight="700" letter-spacing="1.4">SERVER MANAGEMENT NETWORK</text>
+  <g font-family="'PingFang SC','Microsoft YaHei','Noto Sans CJK SC','Segoe UI',sans-serif">
+    <g transform="translate(92 72)">
+      <rect width="246" height="42" rx="21" fill="#ffffff" stroke="#bfdbfe"/>
+      <circle cx="22" cy="21" r="5" fill="#059669"/>
+      <text x="38" y="27" fill="#1e3a5f" font-size="16" font-weight="700">开源 · GPL-2.0-only · 自包含</text>
     </g>
 
-    <text x="90" y="242" fill="#f8fafc" font-size="94" font-weight="800" letter-spacing="-3.5">BMC DHCP</text>
-    <text x="92" y="307" fill="#dbeafe" font-size="30" font-weight="600">From one cable to the management page.</text>
-    <text x="92" y="349" fill="#93c5fd" font-size="23">Temporary DHCP, live leases and BMC discovery for macOS and Windows.</text>
+    <text x="92" y="223" fill="#0b1f36" font-size="92" font-weight="800" letter-spacing="-3">BMC DHCP</text>
+    <text x="94" y="289" fill="#163a63" font-size="34" font-weight="750">服务器 BMC 临时 DHCP 与发现</text>
+    <text x="94" y="337" fill="#4c6683" font-size="23">连接管理口，选择网卡，分配临时地址并直接打开管理页面。</text>
 
-    <g transform="translate(92 405)">
-      <rect width="172" height="44" rx="14" fill="#ffffff" fill-opacity="0.07" stroke="#ffffff" stroke-opacity="0.13"/>
-      <text x="22" y="29" fill="#e2e8f0" font-size="18" font-weight="650">macOS 15+</text>
+    <g transform="translate(94 390)">
+      <rect width="166" height="44" rx="12" fill="#ffffff" stroke="#c7dcf4"/>
+      <text x="22" y="29" fill="#24496e" font-size="17" font-weight="700">macOS 15+</text>
     </g>
-    <g transform="translate(278 405)">
-      <rect width="194" height="44" rx="14" fill="#ffffff" fill-opacity="0.07" stroke="#ffffff" stroke-opacity="0.13"/>
-      <text x="22" y="29" fill="#e2e8f0" font-size="18" font-weight="650">Windows x64</text>
+    <g transform="translate(274 390)">
+      <rect width="204" height="44" rx="12" fill="#ffffff" stroke="#c7dcf4"/>
+      <text x="22" y="29" fill="#24496e" font-size="17" font-weight="700">Windows 10/11 x64</text>
     </g>
-    <g transform="translate(486 405)">
-      <rect width="214" height="44" rx="14" fill="#ffffff" fill-opacity="0.07" stroke="#ffffff" stroke-opacity="0.13"/>
-      <text x="22" y="29" fill="#e2e8f0" font-size="18" font-weight="650">Self-contained</text>
+    <g transform="translate(492 390)">
+      <rect width="228" height="44" rx="12" fill="#ffffff" stroke="#c7dcf4"/>
+      <text x="22" y="29" fill="#24496e" font-size="17" font-weight="700">内置 Python / Scapy</text>
     </g>
 
-    <g transform="translate(92 512)">
-      <rect width="520" height="105" rx="22" fill="#020617" fill-opacity="0.48" stroke="#38bdf8" stroke-opacity="0.22"/>
-      <text x="26" y="35" fill="#7dd3fc" font-size="15" font-weight="800" letter-spacing="1.8">DHCP HANDSHAKE</text>
-      <text x="26" y="73" fill="#f8fafc" font-size="24" font-weight="750">DISCOVER  →  OFFER  →  REQUEST  →  ACK</text>
+    <g transform="translate(94 492)">
+      <text x="0" y="0" fill="#0b1f36" font-size="18" font-weight="800">DHCP 握手</text>
+      <text x="0" y="44" fill="#1d4f7f" font-size="25" font-weight="700">发现 → 提供 → 请求 → 确认</text>
+      <text x="0" y="76" fill="#6b7f94" font-size="16">自动分配地址、识别 BMC，并保持短租约可控</text>
     </g>
 
     <g filter="url(#shadow)">
-      <rect x="902" y="118" width="584" height="492" rx="30" fill="url(#card)" stroke="#cbd5e1" stroke-opacity="0.18"/>
-      <rect x="932" y="146" width="524" height="48" rx="16" fill="#020617" fill-opacity="0.48"/>
-      <circle cx="961" cy="170" r="7" fill="#f87171"/>
-      <circle cx="985" cy="170" r="7" fill="#fbbf24"/>
-      <circle cx="1009" cy="170" r="7" fill="#34d399"/>
-      <text x="1052" y="177" fill="#94a3b8" font-size="16" font-weight="650">BMC DHCP · isolated management link</text>
+      <rect x="878" y="86" width="624" height="548" rx="32" fill="url(#panel)"/>
+      <rect x="910" y="118" width="560" height="50" rx="15" fill="#061426" fill-opacity="0.5"/>
+      <circle cx="940" cy="143" r="7" fill="#f87171"/>
+      <circle cx="964" cy="143" r="7" fill="#fbbf24"/>
+      <circle cx="988" cy="143" r="7" fill="#34d399"/>
+      <text x="1027" y="150" fill="#a9bdd2" font-size="16" font-weight="600">BMC DHCP · 隔离管理网络</text>
+      <rect x="1360" y="127" width="86" height="32" rx="16" fill="#0b382f" stroke="#34d399" stroke-opacity="0.45"/>
+      <circle cx="1378" cy="143" r="5" fill="#34d399"/>
+      <text x="1392" y="149" fill="#86efac" font-size="13" font-weight="700">已启动</text>
 
-      <rect x="960" y="236" width="204" height="128" rx="22" fill="#0f172a" stroke="#38bdf8" stroke-opacity="0.4"/>
-      <text x="985" y="272" fill="#7dd3fc" font-size="14" font-weight="800" letter-spacing="1.5">WORKSTATION</text>
-      <text x="985" y="315" fill="#f8fafc" font-size="26" font-weight="750">Mac / PC</text>
-      <text x="985" y="342" fill="#94a3b8" font-size="16">10.99.0.1 / 24</text>
+      <rect x="934" y="210" width="206" height="126" rx="22" fill="#0f2742" stroke="#38bdf8" stroke-opacity="0.35"/>
+      <text x="958" y="240" fill="#7dd3fc" font-size="14" font-weight="800">所选网口</text>
+      <text x="958" y="279" fill="#f8fafc" font-size="25" font-weight="750">Mac / PC</text>
+      <text x="958" y="309" fill="#a9bdd2" font-size="16">10.99.0.1 / 24</text>
 
-      <path d="M1164 300H1295" fill="none" stroke="url(#accent)" stroke-width="4" stroke-linecap="round"/>
-      <path d="M1281 289L1295 300L1281 311" fill="none" stroke="#34d399" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
-      <rect x="1166" y="260" width="126" height="28" rx="14" fill="#052e2b" stroke="#34d399" stroke-opacity="0.5"/>
-      <text x="1182" y="279" fill="#6ee7b7" font-size="14" font-weight="800">DHCP ACTIVE</text>
+      <path d="M1140 272H1264" fill="none" stroke="url(#accent)" stroke-width="4" stroke-linecap="round"/>
+      <path d="M1250 261L1264 272L1250 283" fill="none" stroke="#10b981" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+      <rect x="1149" y="233" width="106" height="26" rx="13" fill="#0b382f" stroke="#34d399" stroke-opacity="0.4"/>
+      <text x="1163" y="251" fill="#86efac" font-size="12" font-weight="800">DHCP 已启用</text>
 
-      <rect x="1297" y="218" width="162" height="164" rx="24" fill="#10243d" stroke="#22d3ee" stroke-opacity="0.35"/>
-      <text x="1322" y="255" fill="#67e8f9" font-size="14" font-weight="800" letter-spacing="1.5">BMC</text>
-      <text x="1322" y="301" fill="#f8fafc" font-size="22" font-weight="750">iDRAC</text>
-      <text x="1322" y="330" fill="#f8fafc" font-size="22" font-weight="750">iLO / XCC</text>
-      <text x="1322" y="359" fill="#f8fafc" font-size="22" font-weight="750">iBMC</text>
+      <rect x="1270" y="198" width="176" height="150" rx="22" fill="#102d49" stroke="#22d3ee" stroke-opacity="0.3"/>
+      <text x="1294" y="230" fill="#67e8f9" font-size="14" font-weight="800">服务器 BMC</text>
+      <text x="1294" y="267" fill="#f8fafc" font-size="20" font-weight="750">iDRAC</text>
+      <text x="1294" y="294" fill="#f8fafc" font-size="20" font-weight="750">iLO / XCC</text>
+      <text x="1294" y="321" fill="#f8fafc" font-size="20" font-weight="750">iBMC</text>
 
-      <g transform="translate(960 415)">
-        <rect width="476" height="150" rx="22" fill="#020617" fill-opacity="0.54" stroke="#94a3b8" stroke-opacity="0.16"/>
-        <text x="24" y="34" fill="#94a3b8" font-size="14" font-weight="800" letter-spacing="1.5">LIVE LEASES</text>
-        <circle cx="30" cy="76" r="8" fill="#34d399"/>
-        <text x="51" y="82" fill="#f8fafc" font-size="18" font-weight="700">10.99.0.100</text>
-        <text x="235" y="82" fill="#93c5fd" font-size="16">192.168.1.24</text>
-        <text x="402" y="82" fill="#cbd5e1" font-size="15">300 s</text>
-        <path d="M24 104H452" stroke="#94a3b8" stroke-opacity="0.16"/>
-        <text x="24" y="132" fill="#94a3b8" font-size="15">BMC identified · management URL ready</text>
-        <circle cx="442" cy="127" r="7" fill="#22d3ee"/>
-      </g>
+      <rect x="934" y="368" width="512" height="148" rx="22" fill="#071426" stroke="#94a3b8" stroke-opacity="0.15"/>
+      <text x="958" y="400" fill="#8fa7bd" font-size="14" font-weight="800">当前租约</text>
+      <circle cx="965" cy="438" r="7" fill="#34d399"/>
+      <text x="983" y="445" fill="#f8fafc" font-size="22" font-weight="750">10.99.0.100</text>
+      <text x="1224" y="444" fill="#a9bdd2" font-size="16">租期 300 秒</text>
+      <path d="M958 465H1422" stroke="#94a3b8" stroke-opacity="0.14"/>
+      <text x="958" y="493" fill="#b8c8d8" font-size="16">BMC 已识别 · 管理地址就绪</text>
+
+      <rect x="934" y="548" width="512" height="48" rx="15" fill="#0b5f50"/>
+      <text x="958" y="579" fill="#d1fae5" font-size="17" font-weight="750">打开管理页面</text>
+      <text x="1388" y="579" fill="#d1fae5" font-size="23" font-weight="700">→</text>
     </g>
   </g>
 </svg>
